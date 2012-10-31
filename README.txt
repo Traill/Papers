@@ -1,3 +1,4 @@
+
 COMPILATION
 
 In order to correctly compile and execute Trail Head, use sbt or anything you want.
