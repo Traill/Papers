@@ -1,0 +1,122 @@
+[[[ ID ]]]
+199
+[[[ INDEX ]]]
+0
+[[[ TITLE ]]]
+Inequalities for Entropies of Sets of Subsets of Random Variables
+[[[ AUTHORS ]]]
+Chao Tian
+[[[ ABSTR ]]]
+Abstract—Han’s inequality on the entropy rates of subsets of random variables is a classic result in information theory, which often ﬁnds its application in multiuser information theoretic problems. In this note, we generalize Han’s inequality to allow common components among the random variables, or, in an equivalent manner, to replace the simple random variables in Han’s inequality by subsets of random variables. This additional ingredient signiﬁcantly complicates the matter and the form of the resultant inequalities are rather different from the original Han’s inequality. Our proof only relies on the sub-modularity property of the entropy function and the super-modularity property of the conditional entropy function. This new set of inequalities also provides a new link between Han’s inequality and the n-way sub-modularity inequality.
+[[[ BODY ]]]
+Han’s inequality [1] on the entropy rates of subsets of random variables is a classic result in information theory. It essentially states that the average entropy rates of subsets decrease as the size of subset increases [2] (p. 490). This inequality has found applications in multi-user information theoretic problems; e.g. [3]–[5]. Han’s inequality, however, does not naturally deal with common components among ran- dom variables efﬁciently. For example, consider two random variables 1 V 1 = {W 1 , W 12 } and V 2 = {W 2 , W 12 }, where W 12 is the common component between them. Then a simple application of Han’s inequality to the random variables V 1 and V 2 , which in this case is equivalent to the non-negativity of mutual information, gives
+This is not a good lower bound for H(V 1 ) + H(V 2 ) for the random variable under consideration, as can be seen easily
+In fact, (2) is simply the sub-modularity property of the entropy function [6]. The inequality (2) can indeed be reached by applying Han’s inequality in its conditional form, yet a natural question arises from this simple example: what is the form of the generalized Han’s inequality which takes into account of the common components? In this note, we provide exactly such a new set of inequalities.
+The same question can be considered from another per- spective, that is: what is Han’s inequality when the random variables are in fact subsets of random variables, instead of simple random variables? In the above example, V 1 and V 2 are themselves subsets of the set {W 1 , W 2 , W 12 }. Since both perspectives may be of interest, we will present the main theorem in two equivalent forms.
+The proof of this new set of inequalities hinges only on the sub-modular property of the entropy function, and it relies on another inequality previously discovered in [7], namely, the n- way sub-modularity inequality. As a consequence, this new set of inequalities provides a connection between Han’s inequality and the n-way sub-modularity inequality, as they are special cases of a wider spectrum of inequalities regarding subsets of random variables.
+In addition to the well-known Han’s inequalities, inequali- ties on the entropies of subsets of random variables have been considered in other works, e.g. [8], [9]. The new inequalities we present in this work do not appear to be included in these existing inequalities, though the intersection-cover problem considered in those work is indeed closely related to the proof idea of our main result. This connection is hardly surprising, since all these results are directly related to sub-modularity functions, which naturally appear in the intersection-cover and related counting problems.
+The rest of this note is organized as follows. In Section II, we ﬁrst present the main results on the new set of inequalities, and then discuss its relationship with Han’s inequality and the n-way sub-modular inequality. The proofs are given in Section III, and Section IV gives a few concluding remarks.
+The set {1, 2, . . . , n} is written as I n , and its power set (i.e., the collection of all its subsets) is written as P(I n ). Deﬁne ˆ P(I n ) = P(I n ) \ {∅}, i.e., ˆ P(I n ) is the collection of all subsets of I n excluding the empty set. For a set A, we write its cardinality as |A|. For simplicity, we state the results only for discrete random variables with ﬁnite alphabets for which the entropy functions are always well-deﬁned, however, they can be extended to continuous random variables (or mixed random variables) with well-deﬁned differential entropy functions.
+Theorem 1: Let {W A , A ∈ ˆ P(I n )} be a set of 2 n − 1 discrete random variables jointly distributed according to some
+as n random variables with certain common components, or as subsets of random variables instead of simple random variables; see. Fig. 1 for an illustration when n = 3. To make this more explicit, it is beneﬁcial to present an alternative statement of Theorem 1.
+Theorem 1 : Let {W i , i = 1, 2, . . . , N } be a set of random variables jointly distributed according to some probability mass function on some ﬁnite alphabets. Let C i , i = 1, 2, . . . , n be subsets of I N . Deﬁne
+ 
+ 
+(8) then
+It is straightforward to verify that Theorem 1 and Theorem 1’ are equivalent. This result essentially provides the relation among the average entropy rates of the ﬁxed cardinality intersections of subsets of random variables, however with special consideration of the speciﬁed common parts. It should be noted that there is a layered structure in W A (j), which is generated by taking intersection of different number of subsets
+The following results are complementary to Theorem 1, in a similar manner as those to Han’s inequality [2] (pp. 492-493).
+Theorem 2: Let {W A , A ∈ ˆ P(I n )} be a set of 2 n − 1 discrete random variables jointly distributed according to some probability mass function. Deﬁne
+Combining Theorem 1 and Theorem 2, we have the follow- ing theorem.
+Theorem 3: Let {W A , A ∈ ˆ P(I n )} be a set of 2 n − 1 discrete random variables jointly distributed according to some probability mass function. Deﬁne
+As a special case to Theorem 1, we can recover Han’s inequality on subsets, by letting W A be a constant for all |A| > 1, for which W {i} can be conveniently written as W i .
+Proposition 4: Let {W i } be a set of n discrete random variables jointly distributed according to some probability mass function. Deﬁne
+As another special case to Theorem 1, we can recover the n-way sub-modularity inequality [7], which is the following proposition.
+Proposition 5: Let {W A , A ∈ ˆ P(I n )} be a set of 2 n − 1 discrete random variables jointly distributed according to some probability mass function. Then
+The left hand side of (16) is simply h (n) 1 and the right hand side is simply h (n) n . For this reason, it is tempting to state Proposition 5 as a corollary of Theorem 1. However, we refrain from doing so because Proposition 5 in fact plays an instrumental role in our proof of Theorem 1. The proof of Proposition 5 can be found in [7].
+It should be noted that though Han’s inequality and the n-way sub-modularity inequality can be recovered this way, this does not mean Theorem 1 is stronger. Indeed the new
+1 3
+set of inequalities, or rather its general form on sub-modular functions (given in the next section) can be specialized to the n-way sub-modularity inequality, however, since the n- way sub-modularity inequality is sufﬁcient to prove the new set of inequalities, they are completely equivalent for general sub-modular functions. The new set of inequalities on entropy function can be specialized to Han’s equality, yet the condi- tional version of Han’s inequality implies the sub-modularity of the entropy function, and thus the new set of inequalities in its entropy form and the conditional version of Han’s inequality are equivalent. In the language of classiﬁcation of information inequalities, these inequalities are all Shannon type inequalities [10]. Despite this relationship, it is our hope that this new set of inequalities may ﬁnd its applications in the future, just as Han’s inequality ﬁnds applications in [3]–[5] some 20 or 30 years after its discovery.
+Example: Consider n = 3, and the random variables in Theorem 1 are
+where for simplicity we have written W {1,2,3} as W 123 , and similarly for W {i,j} and W {i} ; see Fig. 1. Theorem 1 then gives (17) on the top of this page. We can also naively apply Han’s inequality on the three sets of random variables, and treat each of them as a random variable,
+T 1 = {W 1 , W 12 , W 13 , W 123 } T 2 = {W 2 , W 12 , W 23 , W 123 }
+which gives (18) on the top of this page. Note that when all the random variables are independent, (17) becomes equalities, however, (18) will not give equalities in general. The form of (17) is not obvious, particularly the coefﬁcients of the entropies are not easy to determine a priori.
+It is well known that the entropy function is sub-modular, thus the following theorem regarding sub-modular functions sufﬁces for the proof of Theorem 1. For notational simplicity, we reserve the calligraphic letters A, A and B for non-empty subset of I n , i.e., A ∈ ˆ P(I n ) (and similarly for A and B), and will not explicitly include this condition from here on.
+Theorem 6: Let θ be a submodular function on sets, i.e., for any two sets C 1 and C 2 ,
+We will need the following lemma from [7] to prove Theorem 6. It is clear that Proposition 5 follows directly from this lemma.
+Lemma 1 ([7] n-way sub-modularity): Let θ be a sub- modular function, then
+We ﬁrst prove that θ (n) n ≤ θ (n) n−1 . For notational simplicity, A i is used to denote I n \ {i} for i = 1, 2, . . . , n. By Lemma
+it is clear that v ≤ j + 1. Next we show that v = j if and only if i + j ≤ n.
+and thus for this choice I j ∈
+(30) Thus v = j for this case.
+Next we show that if i + j ≤ n, then there does not exist a set A such that (29) can hold, and it will follow that I j / ∈ C (j) i , and thus v = j+1 for this case. We prove this by contradiction. For (29) to hold, it must be true that
+However there are only a total of n − j possible choices of A m such that I j ⊆ A m , but at the same time |A | = i > n−j by assumption. Thus a contradiction arises by the pigeonhole principle. Thus (26) is indeed true.
+To prove θ (n) k ≤ θ (n) k−1 for k ≤ n, we take a similar approach as used in [2] (p. 491). We ﬁrst limit the choice of A and B to a k-element subset of I n , and then taking a uniform choice over its (k − 1)-element subsets. For each such k-element subset, θ (k) k ≤ θ (k) k−1 , and the inequality remains true after taking the expectation over all k-element subset chosen uniformly from I n . This completes the proof.
+Theorem 1 now directly follows from Theorem 6. Clearly, if the sub-modular functions in Theorem 6 are replaced by super- modular functions, the direction of the inequalities are simply reversed. With this observation, Theorem 2 follows directly from the super-modularity of the conditional entropy function H(C|C c ), where C c = Ω \ C is the complement of set C. This can be seen as follows.
+where the inequality is by the sub-modularity of the entropy function and the fact
+The proofs of Theorem 3, Proposition 4 and Proposition 5 are trivial, and thus omitted here.
+We provided a new set of inequalities, which generalizes the classic Han’s inequality on entropy rates of subsets of random variables to include common components. These inequalities provide a link between Han’s inequality and the n-way sub- modularity inequality, both of which belong to this new set of inequalities as special cases.
+Admittedly, this new set of inequality has yet to ﬁnd appli- cations in information theoretical problems. These inequalities, however, are indeed motivated by one of author’s recent works [11], and the consideration to include common components comes from the common message requirement in broadcast channel. It appears possible to simplify the rather lengthy proof given in [11] with the help of this new set of information
+inequalities. It remains to be seen whether this new set of inequalities can ﬁnd its application elsewhere.
+[[[ REFS ]]]
+T. S. Han
+--
+Nonnegative entropy measures of multivariate symmetric correlations
+----
+T. M. Cove
+J. A. Thoma
+--
+Elements of Information Theory, New York: Wiley, 1991
+----
+A. Albanese
+J. Blomer
+J. Edmonds
+M. Luby
+M. Sudan
+--
+Priority encoding transmission
+----
+H. Wang
+P. Viswanath
+--
+Vector Gaussian multiple description with two levels of receivers
+----
+C. Tian
+S. Mohajer
+S. Diggavi
+--
+Approximating the Gaussian multiple description rate region under symmetric distortion constraints
+----
+S. Fujishige
+--
+Polymatroidal dependence structure of a set of random variables
+----
+H. J. A. Harvey
+R. Kleinberg
+A. R. Lehman
+--
+On the capacity of information networks
+----
+F. R. K. Chung
+R. L. Graham
+P. Frankl
+J. B. Shearer
+--
+Some intersection theorems for ordered sets and graphs
+----
+M. Madiman
+P. Tetali
+--
+Information inequalities for joint distribu- tions, with interpretations and applications
+----
+R. Yeun
+--
+A First Course in Information Theory , Kluwer Aca- demic/Plenum Publishers, New York, 2002
+----
+C. Tian
+--
+Latent capacity region: a case study on symmetric broadcast with common messages
+[[[ META ]]]
+parsed -> yes
+file -> E:\isit2011\199.pdf
+[[[ LINKS ]]]
+
