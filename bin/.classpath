@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path=""/>
+	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
+	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_COMPILER_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/lib/breeze/dlwh-breeze-feca1cf/process/target/breeze-process-assembly-0.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Amine/Downloads/netlib-java-0.9.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Amine/Downloads/lapack.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
