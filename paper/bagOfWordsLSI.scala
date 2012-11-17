@@ -1,13 +1,17 @@
 package paper
 
-import breeze.linalg.support.CanCopy
+
 import breeze.linalg.DenseVector
+import breeze.classify
 import org.netlib.lapack.LAPACK
 import org.netlib.util.intW
-import scala.Array.canBuildFrom
+import breeze.linalg.support.{CanCopy}
 
-trait bagOfWordsLSI {
 
+
+object bagOfWordsLSI {
+
+ // error is here:
   def compareBoW(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get
 	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers)
@@ -18,8 +22,8 @@ trait bagOfWordsLSI {
 					val otherPapers = loadedPapers.filter(p != _)
 
 					// Compare to every other paper
-					// Test					
-					val weights : List[Int] = for (other <- otherPapers) yield getScores(matrixOfWeights, p.index)(other.index)
+					// Problem is in this line			
+					val weights : List[Int] = for (other <- otherPapers) yield 2
 					// Make links
 					//val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
 					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
@@ -527,6 +531,8 @@ def getScores(matrixOfScores: DenseMatrix[Double], column: Int): List[Double] ={
 		object Breakdown extends Reason
 	}
 	
+	//Scala for java developers: http://blog.scala4java.com/2011/12/matrix-multiplication-in-scala-single.html
+	
 	def multiplyArrays(m1: Array[Array[Double]], m2: Array[Array[Double]]) :  Array[Array[Double]] = {
     val res =  Array.ofDim[Double](m1.length, m2(0).length)
     val M1_COLS = m1(0).length
@@ -560,50 +566,8 @@ def getScores(matrixOfScores: DenseMatrix[Double], column: Int): List[Double] ={
     res
 
   }
-//	def mult[A](a: Array[Array[A]], b: Array[Array[A]])(implicit n: Numeric[A]) = {
- // import n._
-  //for (row <- a)
-  //yield for(col <- b.transpose)
-    //    yield row zip col mapMPJ { case (a, b) => a * b.transpose } reduceMPJ (_ + _)
- 
-//}
 
 }
 
-//redefining matrices:
-//http://www.scalaclass.com/book/export/html/1
-
-object Matrix{
-	type Row = List[Double]
-	type Matrix = List[Row]
-	def apply( rowCount:Int, colCount:Int )( f:(Int,Int) => Double ) = (
-							for(i <- 1 to rowCount) yield 
-							( for( j <- 1 to colCount) yield f(i,j) ).toList
-							).toList
-
-							//defining matrix transpose:
-							private def transpose(m:Matrix):Matrix ={ 
-		if(m.head.isEmpty) Nil else m.map(_.head) :: transpose(m.map(_.tail))
-	} 
-
-	//new definition of the dot product
-	def dotProd(v1:List[Double],v2:List[Double]) = {
-		v1.zip( v2 ).map{ t:(Double,Double) => t._1 * t._2 }.reduceLeft(_ + _)
-	}
-
-	def convertToArray(mat: Matrix): Array[Double]={
-		val a = mat.flatten.toArray
-		return a
-	}
-
-	//Added matrix multiplication
-	def mXm( m1:Matrix, m2:Matrix ) = {
-		for( m1row <- m1 ) yield{
-			for( m2col <- transpose(m2) ) yield{
-				dotProd( m1row, m2col )
-			}
-		}    
-	}
-}
 
 //finished rearranging code for LSI (mise en page)

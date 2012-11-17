@@ -1,6 +1,5 @@
 package paper
 
-import scala.Array.canBuildFrom
 import scala.collection.immutable.List
 
 
