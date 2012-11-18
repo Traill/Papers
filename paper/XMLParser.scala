@@ -13,7 +13,6 @@ object XMLParser extends Parsers with TitleExtractor1
   
    val extractionOrder: List[(Paper, XMLDocument, List[XMLParagraph]) => (List[XMLParagraph], Paper)] = List(extractTitle, extractAuthors, extractAbstract, extractBody, extractReferences)
 	
-
    // This method returns the xml representation of the text contained in the Source object
    def getXMLObject(in: Source): Option[Elem] = {
 	  // String generation and illegal xml characters removing

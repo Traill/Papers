@@ -10,6 +10,7 @@ class XMLPosition(x: Int, y: Int, width: Int, height: Int) {
    override def toString(): String = "[x= " + x + ", y= " + y + ", width= " + width + ", height= " + height + "]"
 }
 
+
 // This class defines a particular font (with the totality of xml ids defining it)
 class XMLFont(IDs:String, size: String, family: String, color: String) {
    def getID: String = IDs

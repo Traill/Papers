@@ -4,8 +4,6 @@ import scala.collection.immutable.List
 
 
  trait bagOfWords {
-
-
 	//compare based on scores and return List[Paper]
 	def compareBoW(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get

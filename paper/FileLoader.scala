@@ -5,6 +5,7 @@ import scala.io.Source
 
 // This object provides helpful methods for file and system managing
 object SystemHelper {
+  
 	private val supportedFormats = """pdf"""
 	private val os = sys.props.get("os.name")
 	  

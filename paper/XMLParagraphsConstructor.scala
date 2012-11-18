@@ -3,6 +3,7 @@ package paper
 import scala.xml.NodeSeq
 
 object XMLParagraphsConstructor {
+  
 	private class ParagraphDelimiter(value: Int, tolerance: Int) {			  
 		// !!! Equal to =   (assignment, not comparing)
 		def == (cValue: Int): ParagraphDelimiter = new ParagraphDelimiter(cValue, tolerance)

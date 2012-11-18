@@ -9,10 +9,10 @@ import breeze.linalg.support.{CanCopy}
 
 
 
-object bagOfWordsLSI {
+trait bagOfWordsLSI {
 
  // error is here:
-  def compareBoW(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
+  def compareBoWLSI(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get
 	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers)
 			loadedPapers.map(p => {
@@ -20,10 +20,10 @@ object bagOfWordsLSI {
 				if (p.meta.get("linked") == None) {
 					// Get list of papers that aren't current paper
 					val otherPapers = loadedPapers.filter(p != _)
-
+					println(getScores(matrixOfWeights, p.index).toString)
 					// Compare to every other paper
 					// Problem is in this line			
-					val weights : List[Int] = for (other <- otherPapers) yield 2
+					val weights : List[Int] = for (other <- otherPapers) yield getScores(matrixOfWeights,p.index).valueAt(other.index)
 					// Make links
 					//val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
 					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
@@ -162,7 +162,6 @@ object bagOfWordsLSI {
 			val textsLength = textsList.length
 			val dictionary = textsList.removeDuplicates.sort(_<_)
 			println(dictionary)
-			
 			// we compute the Matrix of scores for the vectors of words for every document
 		    //construct it as a vector to convert it as a Matrix
 			val tfidfVector = new Array[Double](dictionary.length*datasetSize)
@@ -194,27 +193,29 @@ object bagOfWordsLSI {
 
 			//SVD method returns simple arrays - need to convert them:
 			val (u,s,v) = svd(termDocMatrix)
-			/* println(u.deep.mkString("\n"))
-			println("end of u")
+			 //println(u.deep.mkString("\n"))
+			//println("end of u")
 			println(s.deep.mkString("\n"))
 			println("end of s")
-			println(v.deep.mkString("\n"))
-			println("end of v")
-*/
+			//println(v.deep.mkString("\n"))
+			//println("end of v")
+
 			//converting w and d to 2 dimensional arrays:
 			var uo = reconstructArray(u,termDocMatrix.rows)
 			println(uo.length + " " + uo.transpose.length)
 			var vo = reconstructArray(v,termDocMatrix.cols)
 			println(vo.length + " " + vo.transpose.length)
-			var so = Array.ofDim[Double](termDocMatrix.rows,s.length)
+			var so = Array.ofDim[Double](termDocMatrix.rows,termDocMatrix.cols)
 			println(so.length + " " + so.transpose.length)
 			var count = 0
 			var count2 = 0
 			s foreach{e=>
+			  while(count2 <= termDocMatrix.cols-1){
 					so(count)(count2) = e
 					count += 1
 					count2 += 1
 			  		}
+			}
 
 			//printing s to see the values
 			println(s.deep.mkString("\n"))
@@ -262,7 +263,7 @@ object bagOfWordsLSI {
 			//Multiplication:
 			println(newUo.length,newUo.transpose.length,keptValues.length,keptValues.transpose.length,newVo.length,newVo.transpose.length)
 			println(keptValues.length + " " + keptValues.transpose.length + " " + newVo.length + " " + newVo.transpose.length)
-			val xo = multiplyArrays(newUo,multiplyArrays(newKeptValues,newVo))
+			val xo = multiplyArrays(uo,multiplyArrays(so,vo))
 
 
 			//currently performing test without newUo or newVo
@@ -295,13 +296,16 @@ object bagOfWordsLSI {
 			//not optimal version:
 				for (i <- 0 to datasetSize-1){
 					for (j <- 0 to datasetSize-1){
-					//Compute scalar product between two matrices
+						if(i==j){
+					    similarityMatrix(i,j) = -1
+						}else{
+						//Compute scalar product between two matrices
 						val firstColumn = newtermDocMatrix(0 to newtermDocMatrix.rows-1,i)
 						val secondColumn =  newtermDocMatrix(0 to newtermDocMatrix.rows-1,j)
 						//println(firstColumn.toString,i)
 						similarityMatrix(i,j) = firstColumn.dot(secondColumn)	 
 
-					//Compute 2nd norm and output cosine similarity
+					    //Compute 2nd norm and output cosine similarity
 						val firstColumnNorm = firstColumn.norm(2)
 						//println(firstColumnNorm)
 						val secondColumnNorm = secondColumn.norm(2)
@@ -309,6 +313,7 @@ object bagOfWordsLSI {
 						similarityMatrix(i,j) = similarityMatrix(i,j)/(firstColumnNorm*secondColumnNorm)
 						println(i + " and j is " + j )
 						println(similarityMatrix(i,j))
+					    }
 					}
 				}
 			val maximalWeight = similarityMatrix.max
@@ -320,7 +325,10 @@ object bagOfWordsLSI {
 			//exportMatrixToText(smat)
 			//other way to do it
 			//val normalizedCosSimilarity = (similarityMatrix:*(100/maximalWeight)).t
-			println(distanceMat)
+			//println(similarityMatrix.toString)
+			//println(normalizedCosSimilarity(0 to 10,0 to 10).toString)
+			//println(normalizedCosSimilarity(0 to 10,11 to 19).toString)
+			
 			return normalizedCosSimilarity
 			//Code works but there are several problems: NaN for some similarity values... not normal
 			// NaN values are due to the division of 0 by a really high number... Need to perform tests.

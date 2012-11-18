@@ -6,6 +6,7 @@ import scala.xml.NodeSeq
 
 object XMLObjectsManager {
    
+  
    def getCleanXMLParagraph(lineSeparator: String): XMLParagraph = new XMLParagraph("", new XMLPosition(0, 0, 0, 0), new XMLParagraphOptionsContainer(XMLParagraphOptions.NONE), List(), lineSeparator, "", "")
   
    // Since the xml file sometimes creates different fonts with the same features (size, family, etc), it

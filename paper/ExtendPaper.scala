@@ -9,6 +9,7 @@ abstract class PaperSource {
   def getLabel : String
 }
 
+
 object TalkDates extends PaperSource {
 
   import scala.util.Random

@@ -1,6 +1,7 @@
 package paper
 
 trait InformationExtractor {	
+  
    // This method finds the first element in a list matching a particular condition and returns it with the rest of the list
    protected def findFirstOf(list: List[XMLParagraph], condition: (XMLParagraph) => Boolean): List[XMLParagraph] = list match{
      case List() => Nil

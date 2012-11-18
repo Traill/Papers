@@ -10,6 +10,7 @@ object ExtractionRegexes {
 	val titleTermination = """[\.\?]"""
 }
 
+
 // This class is a the top of the hierarchy
 abstract class ReferenceProcessor {
 	def extract(ref: String): (Option[Title], Option[List[Author]])

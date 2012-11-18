@@ -7,6 +7,7 @@ import scala.io.Source
 
 object Cache {
   
+  
   // Constants
   val dir = "cache" + Paths.sep
   val parsed = "parsed"

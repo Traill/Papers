@@ -14,6 +14,7 @@ trait XMLScheduleParser {
   import scala.collection.immutable.Map._
 
   // Overall function that loads the xml schedule and returns the papers with the extra data
+  
   def getXMLSchedule(paperPos : String, papers : Option[List[Paper]]) : List[Paper] = {
     println("BEGIN OF XML SCHEDULING")
 	val path = paperPos + Paths.sep + "schedule.xml"

@@ -14,10 +14,11 @@ object Analyze {
   }
 }
 
+
 class Analyzer extends Object with LoadPaper
                               with ParsePaper 
                               with ExtendPaper
-                              with bagOfWords
+                              with bagOfWordsLSI
                               with XMLScheduleParser
                               with Graphs {
 
@@ -43,7 +44,7 @@ class Analyzer extends Object with LoadPaper
     val extendedPapers : Option[List[Paper]] = if(options.isEmpty || options.contains("-e")) Some(extend(paperPos, xmlPapers, sources)) else None
     
     // Compare the papers individually
-    val comparedPapers : Option[List[Paper]] = if(options.isEmpty || options.contains("-c")) Some(compareBoW(paperPos, extendedPapers, limit)) else None
+    val comparedPapers : Option[List[Paper]] = if(options.isEmpty || options.contains("-c")) Some(compareBoWLSI(paperPos, extendedPapers, limit)) else None
 
 
     if(options.isEmpty || options.contains("-g")){
