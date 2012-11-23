@@ -11,10 +11,11 @@ import breeze.linalg.support.{CanCopy}
 
 trait bagOfWordsLSI {
 
+
  // error is here:
   def compareBoWLSI(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get
-	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers)
+	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers,loadedPapers.length)
 			loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
@@ -89,7 +90,7 @@ trait bagOfWordsLSI {
 	}
 
 	//Creating the matrix:
-	def createTDMatrix(papers: List[Paper]): breeze.linalg.DenseMatrix[Int] = {
+	def createTDMatrix(papers: List[Paper], approximation: Int): breeze.linalg.DenseMatrix[Int] = {
 		val datasetSize = papers.length
 		//val filesList = new java.io.File(directory.toString).listFiles.filter(_.getName.endsWith(".txt"))
 		//val datasetSize = filesList.length
@@ -174,11 +175,6 @@ trait bagOfWordsLSI {
 					if (i % dictionary.length == 0 && i != 0){
 						j += 1	
 					}
-//println(j)
-//println(dictionary(i%dictionary.length),j,datasetSize,counts)
-//println(counts.flatten.contains(dictionary(i%dictionary.length)))
-//val asdas = counts.toList.flatten
-//println(asdas)
 
 			        tfidfVector(i) = tfidf(dictionary(i%dictionary.length),j,datasetSize,counts)			
 				}
@@ -209,16 +205,25 @@ trait bagOfWordsLSI {
 			println(so.length + " " + so.transpose.length)
 			var count = 0
 			var count2 = 0
-			s foreach{e=>
-			  while(count2 <= termDocMatrix.cols-1){
-					so(count)(count2) = e
+			
+			// put the vector s into a n*m matrix so form:
+			s foreach{e=>	 
+			  if(count2 <= termDocMatrix.cols-1){
+					so(count)(count2) = e		
 					count += 1
-					count2 += 1
+					count2 += 1			
 			  		}
 			}
 
+			val test = multiplyArrays(uo,multiplyArrays(so,vo))
+			val newtest = new Array[Array[Double]](10,10)
+			for(i<- 0 to 9){
+			  for (j<- 0 to 9){
+			    newtest(i)(j)=so(i)(j)
+			  }
+			}
 			//printing s to see the values
-			println(s.deep.mkString("\n"))
+			//println(s.deep.mkString("\n"))
 
 			//keeping k greatest singular values:
 			//test with half the length of the vector
@@ -226,15 +231,17 @@ trait bagOfWordsLSI {
 			println("computing k maximal values")
 			//need to make a local copy of s:
 			//val so = copy(s)
-			val indices = findKMax(s, scala.math.round((s.length/2)),emptyList)
+			// SVD returns the first k values as the k highest values - assuming no need for indices:
+			//val indices = findKMax(s, approximation, emptyList)
 			
 			println("computed k maximal values")
-			println(indices)
-			//select values of the indices in the given array s:
+			//println(indices)
+			//select values of the indices in the given array s - indices are the 0 to k-1 first values:
 			val emptyArray = new Array[Array[Double]](0)
-			val keptValues = selectElementsOf2dimArray(so,indices,emptyArray)
+			val keptValues = selectElementsOf2dimArray(so,(0 to approximation-1).toList,emptyArray)
 			var newKeptValues = new Array[Array[Double]](keptValues.length,keptValues.length)
 			var arrayCounter = 0 
+			
 			println(keptValues.deep.mkString("\n"))
 			//keptValues.transpose foreach { x=> arrayCounter match{
 			  //case y if arrayCounter < indices.length  => newKeptValues(arrayCounter) = x
@@ -243,7 +250,7 @@ trait bagOfWordsLSI {
 			//}
 			val keptVTr = keptValues.transpose
 			keptVTr foreach{e =>
-			if (arrayCounter <= indices.length-1){
+			if (arrayCounter <= approximation-1){
 				newKeptValues(arrayCounter) = e
 				arrayCounter += 1
 			}else{
@@ -257,24 +264,37 @@ trait bagOfWordsLSI {
 			//keep the same values for the matrix multiplication: XO = UO*SO*VtO 
 			val emptyArray2 = new Array[Array[Double]](0)
 			val emptyArray3 = new Array[Array[Double]](0)
-			var newUo = selectElementsOf2dimArray(uo.transpose,indices,emptyArray2)
+			var newUo = selectElementsOf2dimArray(uo.transpose,(0 to approximation-1).toList,emptyArray2)
 			newUo = newUo.transpose
-			var newVo = selectElementsOf2dimArray(vo.transpose,indices,emptyArray3)
+			var newVo = selectElementsOf2dimArray(vo,(0 to approximation-1).toList,emptyArray3)
+			newVo = newVo.transpose
 			//Multiplication:
 			println(newUo.length,newUo.transpose.length,keptValues.length,keptValues.transpose.length,newVo.length,newVo.transpose.length)
 			println(keptValues.length + " " + keptValues.transpose.length + " " + newVo.length + " " + newVo.transpose.length)
-			val xo = multiplyArrays(uo,multiplyArrays(so,vo))
+			val xo = multiplyArrays(newUo,multiplyArrays(newKeptValues,newVo))
 
 
 			//currently performing test without newUo or newVo
 			// Obtain a single dimension array out of the resulting array xo
-			var recomposedMatrix = new Array[Double](newUo.length*newVo.transpose.length)
-			var k = 0		
+			//var recomposedMatrix = new Array[Double](newUo.length*newVo.transpose.length)
+			//var k = 0		
 			//useless - use flatten method instead:
-			xo.transpose foreach { e => e foreach{ b=>recomposedMatrix(k) = b	
-						k= k+1}		  
-			}
-			//val recomposedMatrix = xo.flatten
+			//xo.transpose foreach { e => e foreach{ b=> recomposedMatrix(k) = b	
+			//			k= k+1
+			//			if(k-1<=20){
+			//			println(recomposedMatrix(k))}		  
+			//}
+			//}
+			//replaced xo by test
+			val recomposedMatrix = xo.transpose.flatten
+			val newrecomposedMatrix = test.transpose.flatten
+			var counter = 0
+
+			recomposedMatrix foreach{ e => 
+			  if(counter<=30) {println("recomposed -> " + e)
+			    println("tfidf -> " + tfidfVector(counter))
+			    println("newrecomp -> " + newrecomposedMatrix(counter))} 
+			  counter+=1}
 			//println(recomposedMatrix.deep.mkString("\n"))
 			
 			// Compute distance between the two matrices and then compute the norm of the average distance
@@ -283,12 +303,17 @@ trait bagOfWordsLSI {
 			//Edit: does not work because termDocMatrix is a Matrix and not an array as per
 			//Iterator.fromArray(xo) foreach (x => Iterator.fromArray(termDocMatrix) foreach (y => x.zip(y)))
 			
-			//Compare both arrays - > v2
-			val distanceMat = Math.sqrt((recomposedMatrix.toList.zip(tfidfVector.toList) foldLeft 0.0)((sum,t) => 
-			sum + (t._2-t._1)*(t._2-t._1)))
-			//println(newmat.deep.mkString("\n"))
+			def matchApproximation(app: Int): breeze.linalg.DenseMatrix[Double] = app match{
+			  case termDocMatrix.cols =>  new breeze.linalg.DenseMatrix[Double](termDocMatrix.rows,termDocMatrix.cols,newrecomposedMatrix)
+					  					
+			  case 0 => new breeze.linalg.DenseMatrix[Double](termDocMatrix.rows,termDocMatrix.cols,newrecomposedMatrix)
+					  					
+			  case y => new breeze.linalg.DenseMatrix[Double](termDocMatrix.rows,termDocMatrix.cols,recomposedMatrix)	            
+			}
 			
-			val newtermDocMatrix = new breeze.linalg.DenseMatrix[Double](termDocMatrix.rows,termDocMatrix.cols,recomposedMatrix)
+			val newtermDocMatrix = matchApproximation(approximation)
+			val distanceMat = Math.sqrt((newrecomposedMatrix.toList.zip(tfidfVector.toList) foldLeft 0.0)((sum,t) => 
+					  					 sum + (t._2-t._1)*(t._2-t._1)))			
 			//compute cosine similarity:
 			//println(newtermDocMatrix.toString)
 			val similarityMatrix = breeze.linalg.DenseMatrix.zeros[Double](datasetSize,datasetSize)
@@ -300,7 +325,9 @@ trait bagOfWordsLSI {
 					    similarityMatrix(i,j) = -1
 						}else{
 						//Compute scalar product between two matrices
+						  // maybe perform transpose?
 						val firstColumn = newtermDocMatrix(0 to newtermDocMatrix.rows-1,i)
+
 						val secondColumn =  newtermDocMatrix(0 to newtermDocMatrix.rows-1,j)
 						//println(firstColumn.toString,i)
 						similarityMatrix(i,j) = firstColumn.dot(secondColumn)	 
@@ -319,21 +346,16 @@ trait bagOfWordsLSI {
 			val maximalWeight = similarityMatrix.max
 			//val smat = similarityMatrix.toString
 			//1 way to do it
+			println(distanceMat)
 			val normalizedCosSimilarity = similarityMatrix.map(weight =>{
 												((weight*100)/maximalWeight).toInt
 															})
-			//exportMatrixToText(smat)
-			//other way to do it
-			//val normalizedCosSimilarity = (similarityMatrix:*(100/maximalWeight)).t
-			//println(similarityMatrix.toString)
-			//println(normalizedCosSimilarity(0 to 10,0 to 10).toString)
-			//println(normalizedCosSimilarity(0 to 10,11 to 19).toString)
-			
+
 			return normalizedCosSimilarity
 			//Code works but there are several problems: NaN for some similarity values... not normal
 			// NaN values are due to the division of 0 by a really high number... Need to perform tests.
 	}
-
+	
 	/*
 def getScores(matrixOfScores: DenseMatrix[Double], column: Int): List[Double] ={
 
@@ -576,6 +598,8 @@ def getScores(matrixOfScores: DenseMatrix[Double], column: Int): List[Double] ={
   }
 
 }
+	
+
 
 
 //finished rearranging code for LSI (mise en page)
