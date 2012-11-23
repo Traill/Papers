@@ -6,21 +6,24 @@ import scala.collection.immutable.List
 
 
 	//compare based on scores and return List[Paper]
-	def compareBoW(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
-	  val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get
+	def compareBoW(paperPos: String, papers : List[Paper], limit : Int) : List[Paper] = {
+	  val loadedPapers = if(papers == List()) CacheLoader.load(paperPos, Cache.extended) else papers
 	  val matrixOfWeights: Array[Array[Int]] = getMatrixOfScores(loadedPapers)
 			loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
+                    println("Getting linked")
 					// Get list of papers that aren't current paper
 					val otherPapers = loadedPapers.filter(p != _)
 
 					// Compare to every other paper
 					// Test					
 					val weights : List[Int] = for (other <- otherPapers) yield getScores(matrixOfWeights, p.index)(other.index)
+                    println("weights: " + weights.mkString(", "))
 					// Make links
 					//val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
 					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
+                    println(links)
 
 					// Add links to paper, and set it as linked
 					val result = p.setLinks(links).setMeta("linked", "yes")
