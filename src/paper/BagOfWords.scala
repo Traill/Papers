@@ -22,7 +22,7 @@ import scala.collection.immutable.List
                     println("weights: " + weights.mkString(", "))
 					// Make links
 					//val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
-					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
+					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.index,w)
                     println(links)
 
 					// Add links to paper, and set it as linked

@@ -9,14 +9,14 @@ import breeze.linalg.support.{CanCopy}
 
 
 
-trait bagOfWordsLSI {
+trait BagOfWordsLSI {
 
 
  // error is here:
   def compareBoWLSI(paperPos: String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get
 	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers,loadedPapers.length)
-			loadedPapers.map(p => {
+	  loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
 					// Get list of papers that aren't current paper
@@ -27,7 +27,7 @@ trait bagOfWordsLSI {
 					val weights : List[Int] = for (other <- otherPapers) yield getScores(matrixOfWeights,p.index).valueAt(other.index)
 					// Make links
 					//val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
-					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)
+					val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.index,w)
 
 					// Add links to paper, and set it as linked
 					val result = p.setLinks(links).setMeta("linked", "yes")

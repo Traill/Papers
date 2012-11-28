@@ -65,7 +65,7 @@ object Analyze {
 class Analyzer extends Object with LoadPaper
                               with ParsePaper 
                               with ExtendPaper
-                              with BagOfWordsLSI
+                              with BagOfWords
                               with XMLScheduleParser
                               with Graphs {
 
@@ -101,7 +101,7 @@ class Analyzer extends Object with LoadPaper
 
     // Compare the papers individually
     if (options("link") == true) {
-      papers = compareBoWLSI(paperPos, papers, limit)
+      papers = compareBoW(paperPos, papers, limit)
     }
 
     // Create graph
