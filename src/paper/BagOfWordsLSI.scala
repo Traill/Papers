@@ -23,7 +23,8 @@ trait BagOfWordsLSI {
 					val otherPapers = loadedPapers.filter(p != _)
 					println(getScores(matrixOfWeights, p.index).toString)
 					// Compare to every other paper
-					// Problem is in this line			
+					// Problem is in this line		
+					println(p.index)
 					val weights : List[Int] = for (other <- otherPapers) yield getScores(matrixOfWeights,p.index).valueAt(other.index)
 					// Make links
 					//val links = for ((p,w) <- otherPapers.zip(weights) if w >= limit) yield Link(p.id,w)

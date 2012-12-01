@@ -8,14 +8,15 @@ import scala.collection.immutable.List
 	//compare based on scores and return List[Paper]
 	def compareBoW(paperPos: String, papers : List[Paper], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == List()) CacheLoader.load(paperPos, Cache.extended) else papers
-	  val matrixOfWeights: Array[Array[Int]] = getMatrixOfScores(loadedPapers)
+	  //val matrixOfWeights: Array[Array[Int]] = getMatrixOfScores(loadedPapers)
+	  val matrixOfWeights = new Array[Array[Int]](0)
 			loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
                     println("Getting linked")
 					// Get list of papers that aren't current paper
 					val otherPapers = loadedPapers.filter(p != _)
-
+					println(p.index)
 					// Compare to every other paper
 					// Test					
 					val weights : List[Int] = for (other <- otherPapers) yield getScores(matrixOfWeights, p.index)(other.index)
@@ -123,6 +124,9 @@ import scala.collection.immutable.List
 						for (j <- 0 to datasetSize -1){
 							//compute tfidf value for word i and document j
 							tfidfArray(i)(j) = tfidf(dictionary(i),j,datasetSize,counts)
+							if(tfidfArray(i)(j)==java.lang.Double.NaN){
+							  println("i is: " + i + "j is: " + j)
+							}
 							//println(tfidfArray(i)(j))
 						}
 					}
@@ -143,21 +147,25 @@ import scala.collection.immutable.List
 					for (i <- 0 to datasetSize -1){
 						//println(i)
 						for (j <- 0 to datasetSize -1){
-						  if(i==j)
+						  val normVectorI = math.sqrt(dotProduct(tfidfTranspose(i),tfidfTranspose(i)))
+						  val normVectorJ = math.sqrt(dotProduct(tfidfTranspose(j),tfidfTranspose(j)))
+						  if(i==j||normVectorI == 0 || normVectorJ == 0)
 						    cosineSimilarity(i)(j) = 0
 						  else{
 							//May induce some computational time
-							val normVectorI = math.sqrt(dotProduct(tfidfTranspose(i),tfidfTranspose(i)))
-							val normVectorJ = math.sqrt(dotProduct(tfidfTranspose(j),tfidfTranspose(j)))
+							
 							//println("dot product of " + tfidfTranspose(i).deep.mkString("\n") +  " and " + tfidfTranspose(j).deep.mkString("\n") + " is " + dotProduct(tfidfTranspose(i),tfidfTranspose(j)))
-				
-						    //Here operations take cost of length O(dictionary length)
-					     	//compute cosine similarity
+							cosineSimilarity(i)(j) = 0
+							  
 							scalarProduct(i)(j) = dotProduct(tfidfTranspose(i), tfidfTranspose(j))
 							//println(" " + normVectorI + " " + tfidfTranspose(i).deep.mkString("\n"))
-							//println(scalarProduct(i)(j))
+							
 							cosineSimilarity(i)(j) = scalarProduct(i)(j)/(normVectorI*normVectorJ)
-							//println(cosineSimilarity(i)(j) + " " + scalarProduct(i)(j) + " " + normVectorI + " " + normVectorJ)
+							
+						    //Here operations take cost of length O(dictionary length)
+					     	//compute cosine similarity
+							
+							//println("i and j are: " + i + " " + j + cosineSimilarity(i)(j) + " " + scalarProduct(i)(j) + " " + normVectorI + " " + normVectorJ)
 							
 						  }	
 						}
@@ -174,6 +182,7 @@ import scala.collection.immutable.List
 					}
 					//check if rounding is done correctly
 					val maximalWeight = cosineSimilarity.flatten.max
+					println("maximal weight" + maximalWeight)
 					//println(maximalWeight)
 					val normalizedCosSimilarity = cosineSimilarity.map(col =>{
 					  col.map(weight =>  ((weight*100)/maximalWeight).toInt)
@@ -250,7 +259,7 @@ import scala.collection.immutable.List
 			
 			val tfidf = tf(term,document,counts)*idf(term,datasetSize,counts)
 			//println("For document " + document + " and word " + term + " the value of tf is " + tf(term,document,counts) + " and the value of idf is " + idf(term,datasetSize,counts))
-					return tfidf
+			return tfidf
 
 	}
 
