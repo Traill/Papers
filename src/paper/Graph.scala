@@ -25,8 +25,8 @@ trait Graphs {
     // make edge
     val edges = for (link <- paper.links) yield (makeEdge(paper.index, link))
     // Sort edges by weight and pick the n biggest
-    //val l = math.min(, edges.length)
-    return edges.filter(_.weight>=30)
+    val l = math.min(4, edges.length)
+    return edges.sortWith(_.weight > _.weight).take(l)
   }
 
   def makeEdge(index : Int, link : Link) : Edge = Edge(index, link.index, link.weight)

@@ -8,8 +8,7 @@ import scala.collection.immutable.List
 	//compare based on scores and return List[Paper]
 	def compareBoW(paperPos: String, papers : List[Paper], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == List()) CacheLoader.load(paperPos, Cache.extended) else papers
-	  //val matrixOfWeights: Array[Array[Int]] = getMatrixOfScores(loadedPapers)
-	  val matrixOfWeights = new Array[Array[Int]](0)
+	  val matrixOfWeights: Array[Array[Int]] = getMatrixOfScores(loadedPapers)	  
 			loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
@@ -46,63 +45,54 @@ import scala.collection.immutable.List
 
 	}
 	def getMatrixOfScores(papers: List[Paper]): Array[Array[Int]] ={
-
 			//val filesList = new java.io.File(directory.toString).listFiles.filter(_.getName.endsWith(".txt"))
-
 			val datasetSize = papers.length
 			//convert dataset size to float to avoid errors
 			datasetSize.toFloat
-
-					//Initialisation of arrays
-					//Array storing the different sources and the different texts
-					val source = new Array[scala.io.BufferedSource](papers.length)
-					//we will be changing the content of text -> create it as variable
-					var text = new Array[java.lang.String](papers.length)
-
-					val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
-					//now we want to have a map between words and the number of occurences
-					//create an array for easier manipulation
-					val counts = new Array[Map[java.lang.String,Int]](papers.length)
+			//Initialisation of arrays
+			//Array storing the different sources and the different texts
+			val source = new Array[scala.io.BufferedSource](papers.length)
+			//we will be changing the content of text -> create it as variable
+			var text = new Array[java.lang.String](papers.length)
+			val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
+			//now we want to have a map between words and the number of occurences
+			//create an array for easier manipulation
+			val counts = new Array[Map[java.lang.String,Int]](papers.length)
 					
-					//Create an array of lists to store all different lists of keys:
-					val countsList = new Array[List[java.lang.String]](papers.length)
+			//Create an array of lists to store all different lists of keys:
+			val countsList = new Array[List[java.lang.String]](papers.length)
 
-					//List holding all the list of strings of all the texts
-					var textsList = List[java.lang.String]()
-					//reading from every entry of the list:
-					for (k <- 0 to papers.length-1){
-
-						//source(k) = scala.io.Source.fromFile(papers(k))
-						//text(k) = source(k).mkString
-					    text(k) = papers(k).getAbstract.getText
-						//leave out unecessary characters from the analysis
-						text(k) = clean(text(k))
-						//Splitting the string into words to add stemming to every single word
-						val splitString = text(k).split("\\s")
-						var stemmedString = new Array[java.lang.String](splitString.length)
-						var i = 0
-						splitString foreach {e=>
-			  								val a = breeze.text.analyze.PorterStemmer.apply(e)	
-			  								//There is still a blank space at the beginning of string (does not affect output)
-			  								stemmedString(i) = a
-			  								i+=1
-		  									}		
-						//source(k).close()
-						counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)
-						
-						//counts(k) foreach{e=>
-						// val a = clean(e._1)
-						// newCounts(k).+((a,e._2))}
-						//only working with keys for now, creating a list of keys for every text:
-						countsList(k) = counts(k).keys.toList		
-						
-						if(k == 0){
-							textsList = countsList(k)
-							
-						}else{
-							textsList = textsList ::: countsList(k)
-							
-						}						
+			//List holding all the list of strings of all the texts
+			var textsList = List[java.lang.String]()
+			//reading from every entry of the list:
+			for (k <- 0 to papers.length-1){
+				//source(k) = scala.io.Source.fromFile(papers(k))
+				//text(k) = source(k).mkString
+				text(k) = papers(k).getBody.getText
+				//leave out unecessary characters from the analysis
+				text(k) = clean(text(k))
+				//Splitting the string into words to add stemming to every single word
+				val splitString = text(k).split("\\s")
+				var stemmedString = new Array[java.lang.String](splitString.length)
+				var i = 0
+				splitString foreach {e=>
+			  						val a = breeze.text.analyze.PorterStemmer.apply(e)	
+			  						//There is still a blank space at the beginning of string (does not affect output)
+			  						stemmedString(i) = a
+			  						i+=1
+		  							}		
+				//source(k).close()
+				counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)	
+				//counts(k) foreach{e=>
+				// val a = clean(e._1)
+				// newCounts(k).+((a,e._2))}
+				//only working with keys for now, creating a list of keys for every text:
+				countsList(k) = counts(k).keys.toList					
+				if(k == 0){
+					textsList = countsList(k)
+					}else{
+					textsList = textsList ::: countsList(k)			
+					}						
 					}
 
 					//println(counts.deep.mkString("\n"))
@@ -113,8 +103,13 @@ import scala.collection.immutable.List
 					//textsList foreach {e => val a = breeze.text.analyze.PorterStemmer.apply(e) 
 					//newtextsList = newtextsList ::: List(a)}
 					//val textsLength = newtextsList.length
+			
 					val dictionary = textsList.distinct.sortWith(_<_)
-					//println(dictionary)
+					val dictionaryArray = dictionary.toArray
+					val dictionaryString = dictionaryArray.deep.mkString("\n")
+					
+					println(dictionary)
+					println(dictionary.length)
 
 					// we compute the array of scores for the vectors of words for every document
 					val tfidfArray = new Array[Array[Double]](dictionary.length,datasetSize)
@@ -130,6 +125,14 @@ import scala.collection.immutable.List
 							//println(tfidfArray(i)(j))
 						}
 					}
+					val mat = tfidfArray.deep.mkString("\n")
+					def exportMatrixToText(matrix: String) : Unit = {
+							val file = new java.io.File("matrix.csv")
+							val p = new java.io.PrintWriter(file)
+							p.println(matrix)
+							p.close
+					}
+					exportMatrixToText(dictionaryString)
 					println("Computing tfidf array: Complete...")
 					//once we have the scores we can compute the absolute distance between papers and classify them
 					//This is performed computing a scalar product on the score vectors for every document
@@ -270,7 +273,10 @@ import scala.collection.immutable.List
 	}
 
 	//replace all characters of a string except for a-z or A-Z (replacing numbers) and finally _: 
-	def clean(in : String) = { if (in == null) "" else in.replaceAll("[^a-zA-Z_]", " ").toLowerCase
+	
+	//def clean(in : String) = { if (in == null) "" else in.replaceAll("[^a-zA-Z_]", " ").toLowerCase
+	//}
+	def clean(in : String) = { if (in == null) "" else in.replaceAll("[^A-Za-z_]", " ").toLowerCase
 	}
 	
 

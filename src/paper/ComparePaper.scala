@@ -4,9 +4,9 @@ import scala.io.Source
 
 trait ComparePaper {
 
-  def compare(paperPos:String, papers : Option[List[Paper]], limit : Int) : List[Paper] = {
+  def compare(paperPos:String, papers : List[Paper], limit : Int) : List[Paper] = {
     println("BEGIN OF PAPERS COMPARISION")
-	val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers.get
+	val loadedPapers = if(papers == None) CacheLoader.load(paperPos, Cache.extended) else papers
     
 	val finalPapers = loadedPapers.map(p => {
       // Check that paper isn't already linked
