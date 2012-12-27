@@ -16,7 +16,7 @@ trait BagOfWordsLSI {
  // error is here:
   def compareBoWLSI(paperPos: String, papers : List[Paper], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == List()) CacheLoader.load(paperPos, Cache.extended) else papers
-	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers,10)
+	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers,50)
 	  loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
@@ -220,11 +220,11 @@ trait BagOfWordsLSI {
 
 			//val test = multiplyArrays(uo,multiplyArrays(so,vo))
 			val newtest = new Array[Array[Double]](10,10)
-			for(i<- 0 to 9){
-			  for (j<- 0 to 9){
-			    newtest(i)(j)=so(i)(j)
-			  }
-			}
+			//for(i<- 0 to 9){
+			  //for (j<- 0 to 9){
+			    //newtest(i)(j)=so(i)(j)
+			  //}
+			//}
 			//printing s to see the values
 			//println(s.deep.mkString("\n"))
 
@@ -290,7 +290,13 @@ trait BagOfWordsLSI {
 			//}
 			//}
 			//replaced xo by test
-			val recomposedMatrix = newVo.flatten
+			//println(vo.deep.mkString("\n"))
+			//println(newVo.deep.mkString("\n"))
+			
+			val recomposedMatrix = newVo.transpose.flatten
+			
+			
+			//println(recomposedMatrix.deep.mkString("\n"))
 			//val newrecomposedMatrix = test.transpose.flatten
 			//var counter = 0
 
@@ -316,6 +322,8 @@ trait BagOfWordsLSI {
 			}
 
 			val newtermDocMatrix = matchApproximation(approximation)
+			
+			//println(newtermDocMatrix.toString)
 			//val distanceMat = Math.sqrt((newrecomposedMatrix.toList.zip(tfidfVector.toList) foldLeft 0.0)((sum,t) => 
 			//		  					 sum + (t._2-t._1)*(t._2-t._1)))			
 			//compute cosine similarity:

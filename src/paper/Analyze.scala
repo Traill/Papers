@@ -98,7 +98,7 @@ class Analyzer extends Object with LoadPaper
     if (options("extend") == true) {
       papers = extend(paperPos, papers, sources)
     }
-
+  System.out.println(java.lang.Runtime.getRuntime().maxMemory()); 
     // Compare the papers individually
     if (options("link") == true) {
       papers = compareBoWLSI(paperPos, papers, limit)
