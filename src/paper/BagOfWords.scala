@@ -45,7 +45,6 @@ import scala.collection.immutable.List
 
 	}
 	def getMatrixOfScores(papers: List[Paper]): Array[Array[Int]] ={
-			//val filesList = new java.io.File(directory.toString).listFiles.filter(_.getName.endsWith(".txt"))
 			val datasetSize = papers.length
 			//convert dataset size to float to avoid errors
 			datasetSize.toFloat
@@ -66,8 +65,6 @@ import scala.collection.immutable.List
 			var textsList = List[java.lang.String]()
 			//reading from every entry of the list:
 			for (k <- 0 to papers.length-1){
-				//source(k) = scala.io.Source.fromFile(papers(k))
-				//text(k) = source(k).mkString
 				text(k) = papers(k).getBody.getText
 				//leave out unecessary characters from the analysis
 				text(k) = clean(text(k))
@@ -81,11 +78,7 @@ import scala.collection.immutable.List
 			  						stemmedString(i) = a
 			  						i+=1
 		  							}		
-				//source(k).close()
 				counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)	
-				//counts(k) foreach{e=>
-				// val a = clean(e._1)
-				// newCounts(k).+((a,e._2))}
 				//only working with keys for now, creating a list of keys for every text:
 				countsList(k) = counts(k).keys.toList					
 				if(k == 0){
@@ -95,21 +88,9 @@ import scala.collection.immutable.List
 					}						
 					}
 
-					//println(counts.deep.mkString("\n"))
-					//building dictionary:
-					//find unique words in texts:
-					//val texts = textsList.flatten
-					//var newtextsList = List[java.lang.String]()
-					//textsList foreach {e => val a = breeze.text.analyze.PorterStemmer.apply(e) 
-					//newtextsList = newtextsList ::: List(a)}
-					//val textsLength = newtextsList.length
-			
 					val dictionary = textsList.distinct.sortWith(_<_)
 					val dictionaryArray = dictionary.toArray
 					val dictionaryString = dictionaryArray.deep.mkString("\n")
-					
-					println(dictionary)
-					println(dictionary.length)
 
 					// we compute the array of scores for the vectors of words for every document
 					val tfidfArray = new Array[Array[Double]](dictionary.length,datasetSize)
@@ -119,10 +100,6 @@ import scala.collection.immutable.List
 						for (j <- 0 to datasetSize -1){
 							//compute tfidf value for word i and document j
 							tfidfArray(i)(j) = tfidf(dictionary(i),j,datasetSize,counts)
-							if(tfidfArray(i)(j)==java.lang.Double.NaN){
-							  println("i is: " + i + "j is: " + j)
-							}
-							//println(tfidfArray(i)(j))
 						}
 					}
 					val mat = tfidfArray.deep.mkString("\n")
@@ -132,23 +109,18 @@ import scala.collection.immutable.List
 							p.println(matrix)
 							p.close
 					}
-					exportMatrixToText(dictionaryString)
 					println("Computing tfidf array: Complete...")
 					//once we have the scores we can compute the absolute distance between papers and classify them
 					//This is performed computing a scalar product on the score vectors for every document
 					//Computation might take some time
-			
-					//temporary while getting "scalala" to work:
+
 					val scalarProduct = new Array[Array[Double]](datasetSize,datasetSize)
 					val cosineSimilarity = new Array[Array[Double]](datasetSize,datasetSize)
 					//transpose array to perform row Array operations instead of column based operations
-					//println(tfidfArray.deep.mkString("\n"))
 					val tfidfTranspose = tfidfArray.transpose
-			
-					val normalisationTerm = 1
+
 					println("Computing scalar product array")
 					for (i <- 0 to datasetSize -1){
-						//println(i)
 						for (j <- 0 to datasetSize -1){
 						  val normVectorI = math.sqrt(dotProduct(tfidfTranspose(i),tfidfTranspose(i)))
 						  val normVectorJ = math.sqrt(dotProduct(tfidfTranspose(j),tfidfTranspose(j)))
@@ -156,42 +128,22 @@ import scala.collection.immutable.List
 						    cosineSimilarity(i)(j) = 0
 						  else{
 							//May induce some computational time
-							
-							//println("dot product of " + tfidfTranspose(i).deep.mkString("\n") +  " and " + tfidfTranspose(j).deep.mkString("\n") + " is " + dotProduct(tfidfTranspose(i),tfidfTranspose(j)))
-							cosineSimilarity(i)(j) = 0
-							  
-							scalarProduct(i)(j) = dotProduct(tfidfTranspose(i), tfidfTranspose(j))
-							//println(" " + normVectorI + " " + tfidfTranspose(i).deep.mkString("\n"))
-							
-							cosineSimilarity(i)(j) = scalarProduct(i)(j)/(normVectorI*normVectorJ)
-							
+							scalarProduct(i)(j) = dotProduct(tfidfTranspose(i), tfidfTranspose(j))				
+							cosineSimilarity(i)(j) = scalarProduct(i)(j)/(normVectorI*normVectorJ)							
 						    //Here operations take cost of length O(dictionary length)
-					     	//compute cosine similarity
-							
-							//println("i and j are: " + i + " " + j + cosineSimilarity(i)(j) + " " + scalarProduct(i)(j) + " " + normVectorI + " " + normVectorJ)
-							
+					     	//compute cosine similarity	
 						  }	
 						}
 			         }
 					//return array of scores
-					println("Computing scalar product array: Done...")			
-					// map every score with the paper ID
-					//for every paper sort according to scores
-					println("Sorting accordingly...")
-					val a = 0 until datasetSize
-					var positions = new Array[List[(Double,Int)]](datasetSize)
-					for(k <- 0 to datasetSize-1){
-						positions(k) = (scalarProduct(k).zip(a)).toList.sortWith(_._1 < _._1 )
-					}
+					println("Computing scalar product array: Done...")		
+					
 					//check if rounding is done correctly
 					val maximalWeight = cosineSimilarity.flatten.max
-					println("maximal weight" + maximalWeight)
-					//println(maximalWeight)
 					val normalizedCosSimilarity = cosineSimilarity.map(col =>{
 					  col.map(weight =>  ((weight*100)/maximalWeight).toInt)
 					})
 					//return sorted scores with according paper
-					//println(cosineSimilarity.deep.mkString("\n"))
 					
 					normalizedCosSimilarity
 					//(i,j) of scalarProduct represents the scalar product of document i and document j. Now we have
@@ -199,57 +151,28 @@ import scala.collection.immutable.List
 					//we have weights (higher weight/score) means being closer document-to-document wise
 	}
 
-
-
-	// Code has to be made generic for any text file parsed and for the whole dataset to be accurate
-
-	//reading text from given file
-	//Loading the List of all available text files in directory
-
-
-
-// working with lists:
-
-
-
-	//building dictionnary:
-	//find unique words in texts:
-
-
-	//println("The total length of the dictionnary is given by: " + dictionary.length)
-
-	//println("the total length of the list is: " + textsLength)
-
 	//Computing TF value:
-
 	def tf(term: String, document: Int, counts: Array[Map[java.lang.String,Int]]): Double = {
-					//Without normalisation
-					if (counts(document).contains(term)){
-						val freq = counts(document)(term)
-						val normalizedFreq = freq
-					return normalizedFreq
-					}else{
-					return 0.0
-					}
-			//normalization with respect to the documents length to prevent any bias:
-			//new normalisation with respect to the highest occurence in the document
-			
+		//Without normalisation
+		if (counts(document).contains(term)){
+			val freq = counts(document)(term)
+			val normalizedFreq = freq
+		return normalizedFreq
+		}else{
+		return 0.0
+		}
 	}
 
 	//Computing IDF value
-
 	def idf(term: String, datasetSize : Double, counts: Array[Map[java.lang.String,Int]]): Double = {
-			//math.log(size / index.getDocCount(term))
 			// take the logarithm of the quotient of the number of documents by the documents where term t appears
 			var appearances = 0
 			//convert appearances to a float (to avoid errors)
 			appearances.toFloat
-			//println(counts.deep.mkString("\n"))
 			counts foreach {x => if (x.contains(term)){
 									appearances += 1
 									
 						   }
-			//println(term + " => appearances: " + appearances)
 			}
 			val a = math.log(datasetSize/appearances)  
 			return a
@@ -261,9 +184,7 @@ import scala.collection.immutable.List
 			//tfidf = tf*idf
 			
 			val tfidf = tf(term,document,counts)*idf(term,datasetSize,counts)
-			//println("For document " + document + " and word " + term + " the value of tf is " + tf(term,document,counts) + " and the value of idf is " + idf(term,datasetSize,counts))
 			return tfidf
-
 	}
 
 	//defining scala product for array vector operations
@@ -273,9 +194,6 @@ import scala.collection.immutable.List
 	}
 
 	//replace all characters of a string except for a-z or A-Z (replacing numbers) and finally _: 
-	
-	//def clean(in : String) = { if (in == null) "" else in.replaceAll("[^a-zA-Z_]", " ").toLowerCase
-	//}
 	def clean(in : String) = { if (in == null) "" else in.replaceAll("[^A-Za-z_]", " ").toLowerCase
 	}
 	
