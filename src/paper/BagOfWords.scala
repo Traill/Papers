@@ -166,15 +166,15 @@ import scala.collection.immutable.List
 	//Computing IDF value
 	def idf(term: String, datasetSize : Double, counts: Array[Map[java.lang.String,Int]]): Double = {
 			// take the logarithm of the quotient of the number of documents by the documents where term t appears
-			var appearances = 0
 			//convert appearances to a float (to avoid errors)
-			appearances.toFloat
+			var appearances : Int = 0
+			var appearancesFloat = appearances.toFloat
 			counts foreach {x => if (x.contains(term)){
-									appearances += 1
+									appearancesFloat += 1
 									
 						   }
 			}
-			val a = math.log(datasetSize/appearances)  
+			val a = math.log(datasetSize/appearancesFloat)  
 			return a
 
 	}
