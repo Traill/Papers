@@ -73,12 +73,11 @@ import scala.collection.immutable.List
 			val splitString = text(k).split("\\s")
 			var stemmedString = new Array[java.lang.String](splitString.length)
 			var i = 0
-			splitString foreach {e=>
-			  					val a = breeze.text.analyze.PorterStemmer.apply(e)	
-			  					//There is still a blank space at the beginning of string (does not affect output)
-			  					stemmedString(i) = a
-			  					i+=1
-		  						}		
+			splitString foreach {e=> val a = breeze.text.analyze.PorterStemmer.apply(e)	
+								//There is still a blank space at the beginning of string (does not affect output)
+								stemmedString(i) = a
+								i+=1
+								}		
 			counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)	
 			//only working with keys for now, creating a list of keys for every text:
 			countsList(k) = counts(k).keys.toList					
@@ -172,9 +171,10 @@ import scala.collection.immutable.List
 			// take the logarithm of the quotient of the number of documents by the documents where term t appears
 			//convert appearances to a float (to avoid errors)
 			var appearances : Double = 0.0
-			counts foreach {x => if (x.contains(term)){
-									appearances += 1		
-						   		}
+			counts foreach {x => 
+			  				if (x.contains(term)){
+							appearances += 1		
+							}
 			}
 			val a = math.log(datasetSize/appearances)  
 			return a
