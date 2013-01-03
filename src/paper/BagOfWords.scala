@@ -73,10 +73,11 @@ import scala.collection.immutable.List
 			val splitString = text(k).split("\\s")
 			var stemmedString = new Array[java.lang.String](splitString.length)
 			var i = 0
-			splitString foreach {e=> val a = breeze.text.analyze.PorterStemmer.apply(e)	
-								//There is still a blank space at the beginning of string (does not affect output)
-								stemmedString(i) = a
-								i+=1
+			splitString foreach {e=>
+			  					val a = breeze.text.analyze.PorterStemmer.apply(e)
+			  					//There is still a blank space at the beginning of string (does not affect output)
+			  					stemmedString(i) = a
+			  					i+=1
 								}		
 			counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)	
 			//only working with keys for now, creating a list of keys for every text:
@@ -144,7 +145,7 @@ import scala.collection.immutable.List
 			val maximalWeight = cosineSimilarity.flatten.max
 			//Normalize scores up to 100
 			val normalizedCosSimilarity = cosineSimilarity.map(col =>{
-										  col.map(weight =>  ((weight*100)/maximalWeight).toInt)
+										col.map(weight =>  ((weight*100)/maximalWeight).toInt)
 										})
 			//return sorted scores with according paper
 					
@@ -173,7 +174,7 @@ import scala.collection.immutable.List
 			var appearances : Double = 0.0
 			counts foreach {x => 
 			  				if (x.contains(term)){
-							appearances += 1		
+			  				appearances += 1
 							}
 			}
 			val a = math.log(datasetSize/appearances)  
