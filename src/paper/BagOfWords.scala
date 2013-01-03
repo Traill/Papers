@@ -88,14 +88,16 @@ import scala.collection.immutable.List
 				textsList = textsList ::: countsList(k)			
 			}						
 		}
-
-			val dictionary = textsList.distinct.sortWith(_<_)
+			//Build dictionary:
+			val dictionary = buildDictionary(textsList, datasetSize)
 			val dictionaryArray = dictionary.toArray
 			val dictionaryString = dictionaryArray.deep.mkString("\n")
 
 			// we compute the array of scores for the vectors of words for every document
 			val tfidfArray = new Array[Array[Double]](dictionary.length,datasetSize)
 			println("Computing tfidf array... ")
+			
+			//STEP 3: Computing tfidf with tfidf function:
 			for (i <- 0 to dictionary.length -1){
 				for (j <- 0 to datasetSize -1){
 					//compute tfidf value for word i and document j
@@ -115,14 +117,41 @@ import scala.collection.immutable.List
 			//once we have the scores we can compute the absolute distance between papers and classify them
 			//This is performed computing a scalar product on the score vectors for every document
 			//Computation might take some time
-
-			val scalarProduct = new Array[Array[Double]](datasetSize,datasetSize)
-			val cosineSimilarity = new Array[Array[Double]](datasetSize,datasetSize)
-			//transpose array to perform row Array operations instead of column based operations
-			val tfidfTranspose = tfidfArray.transpose
-
+			
+			//STEP 4: Computing cosine similarity:
+			
 			println("Computing scalar product array")
-			for (i <- 0 to datasetSize -1){
+			val cosineSimilarity = computeCosineSimilarity(datasetSize, tfidfArray)
+			
+			//return array of scores
+			println("Computing scalar product array: Done...")		
+					
+			//check if rounding is done correctly
+			val maximalWeight = cosineSimilarity.flatten.max
+			//Normalize scores up to 100
+			val normalizedCosSimilarity = cosineSimilarity.map(col =>{	
+										col.map(weight =>  ((weight*100)/maximalWeight).toInt)
+										})
+			//return sorted scores with according paper
+					
+			normalizedCosSimilarity
+			//(i,j) of scalarProduct represents the scalar product of document i and document j. Now we have
+			// to sort it in order in a list to return the closest documents to a given document
+			//we have weights (higher weight/score) means being closer document-to-document wise
+	}
+
+	//Function to build the dictionary out of different texts concatenated in a list
+	def buildDictionary(textsList: List[java.lang.String], datasetSize: Int) : List[java.lang.String] ={
+		val dictionary = textsList.distinct.sortWith(_<_)
+		return dictionary
+	}
+	
+	def computeCosineSimilarity( datasetSize: Int, tfidfArray: Array[Array[Double]]) : Array[Array[Double]]={
+		val scalarProduct = new Array[Array[Double]](datasetSize,datasetSize)
+		val cosineSimilarity = new Array[Array[Double]](datasetSize,datasetSize)
+		//transpose array to perform row Array operations instead of column based operations
+		val tfidfTranspose = tfidfArray.transpose
+		for (i <- 0 to datasetSize -1){
 				for (j <- 0 to datasetSize -1){
 					val normVectorI = math.sqrt(dotProduct(tfidfTranspose(i),tfidfTranspose(i)))
 					val normVectorJ = math.sqrt(dotProduct(tfidfTranspose(j),tfidfTranspose(j)))
@@ -136,25 +165,10 @@ import scala.collection.immutable.List
 						//compute cosine similarity	
 					}	
 				}
-			 }
-			
-			//return array of scores
-			println("Computing scalar product array: Done...")		
-					
-			//check if rounding is done correctly
-			val maximalWeight = cosineSimilarity.flatten.max
-			//Normalize scores up to 100
-			val normalizedCosSimilarity = cosineSimilarity.map(col =>{
-										col.map(weight =>  ((weight*100)/maximalWeight).toInt)
-										})
-			//return sorted scores with according paper
-					
-			normalizedCosSimilarity
-			//(i,j) of scalarProduct represents the scalar product of document i and document j. Now we have
-			// to sort it in order in a list to return the closest documents to a given document
-			//we have weights (higher weight/score) means being closer document-to-document wise
+		}
+	  return cosineSimilarity
 	}
-
+	
 	//Computing TF value:
 	def tf(term: String, document: Int, counts: Array[Map[java.lang.String,Int]]): Double = {
 		//Without normalisation
