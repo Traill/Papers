@@ -101,8 +101,7 @@ trait BagOfWordsLSI {
 		var textsList = List[java.lang.String]()
 		//reading from every entry of the list:
 		for (k <- 0 to papers.length-1){
-			    text(k) = papers(k).getBody.getText
-			    
+			    text(k) = papers(k).getAbstract.getText		    
 			    //leave out unecessary characters from the analysis
 			    text(k) = clean(text(k))
 			    
@@ -132,8 +131,8 @@ trait BagOfWordsLSI {
 		
 			//building dictionary:
 			//find unique words in texts
-			val textsLength = textsList.length
-			val dictionary = textsList.distinct.sortWith(_<_)
+			val dictionary = buildDictionary(textsList, datasetSize)
+			
 			// we compute the Matrix of scores for the vectors of words for every document
 		    //construct it as a vector to convert it as a Matrix
 			val tfidfVector = new Array[Double](dictionary.length*datasetSize)
@@ -151,6 +150,7 @@ trait BagOfWordsLSI {
 
 			println("Computing tfidf vector: Complete...")
 
+			//transform tfidf vector into a matrix to compute SVD:
 			val termDocMatrix = new breeze.linalg.DenseMatrix[Double](dictionary.length,datasetSize,tfidfVector)
 
 			//once having the termDocMatrix, compute the SVD and then compute cosine similarity on the new matrix:
@@ -174,9 +174,6 @@ trait BagOfWordsLSI {
 					count2 += 1			
 			  		}
 			}
-
-			
-			val emptyList = List[Int]()
 			// SVD returns the first k values as the k highest values - assuming no need for indices:
 			//select values of the indices in the given array s - indices are the 0 to k-1 first values:
 			val emptyArray = new Array[Array[Double]](0)
@@ -204,6 +201,7 @@ trait BagOfWordsLSI {
 
 			val recomposedMatrix = newVo.transpose.flatten
 
+			//Matrix reduction with an approximation app - if no matrix reduction, use old tfidf method:
 			def matchApproximation(app: Int): breeze.linalg.DenseMatrix[Double] = app match{
 			  //keep old method if no matrix reduction
 			  case termDocMatrix.cols =>  termDocMatrix
@@ -215,16 +213,31 @@ trait BagOfWordsLSI {
 			val newtermDocMatrix = matchApproximation(approximation)
 
 			//compute cosine similarity:		
-			val similarityMatrix = breeze.linalg.DenseMatrix.zeros[Double](datasetSize,datasetSize)
+			val similarityMatrix = computeCosineSimilarity(datasetSize, newtermDocMatrix)
+			//normalize weights from 1 to 100
+			val maximalWeight = similarityMatrix.max
+			val normalizedCosSimilarity = similarityMatrix.map(weight =>{
+												((weight*100)/maximalWeight).toInt
+															})
 
-			for (i <- 0 to datasetSize-1){
+			return normalizedCosSimilarity
+	}
+	
+	def buildDictionary(textsList: List[java.lang.String], datasetSize: Int) : List[java.lang.String] ={
+		val dictionary = textsList.distinct.sortWith(_<_)
+		return dictionary
+	}
+
+	def computeCosineSimilarity(datasetSize: Int, termDocMatrix: breeze.linalg.DenseMatrix[Double]): breeze.linalg.DenseMatrix[Double]={
+	  val similarityMatrix = breeze.linalg.DenseMatrix.zeros[Double](datasetSize,datasetSize)
+	  for (i <- 0 to datasetSize-1){
 				for (j <- 0 to datasetSize-1){
 					if(i==j){
 						similarityMatrix(i,j) = -1
 					}else{
 						//Compute scalar product between two matrices
-						val firstColumn = newtermDocMatrix(0 to newtermDocMatrix.rows-1,i)
-						val secondColumn =  newtermDocMatrix(0 to newtermDocMatrix.rows-1,j)
+						val firstColumn = termDocMatrix(0 to termDocMatrix.rows-1,i)
+						val secondColumn =  termDocMatrix(0 to termDocMatrix.rows-1,j)
 							
 						similarityMatrix(i,j) = firstColumn.dot(secondColumn)	 
 
@@ -238,14 +251,9 @@ trait BagOfWordsLSI {
 					    }
 					}
 				}
-			val maximalWeight = similarityMatrix.max
-			val normalizedCosSimilarity = similarityMatrix.map(weight =>{
-												((weight*100)/maximalWeight).toInt
-															})
-
-			return normalizedCosSimilarity
+	  return similarityMatrix
 	}
-
+	
 	def exportMatrixToText(matrix: String) : Unit = {
 		val file = new java.io.File("exportToGephi.csv")
 		val p = new java.io.PrintWriter(file)

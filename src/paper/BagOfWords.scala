@@ -66,7 +66,7 @@ import scala.collection.immutable.List
 		//reading from every entry of the list:
 		//preprocess every paper (for)
 		for (k <- 0 to papers.length-1){
-			text(k) = papers(k).getBody.getText
+			text(k) = papers(k).getAbstract.getText
 			//leave out unecessary characters from the analysis
 			text(k) = clean(text(k))
 			//Splitting the string into words to add stemming to every single word
@@ -74,10 +74,10 @@ import scala.collection.immutable.List
 			var stemmedString = new Array[java.lang.String](splitString.length)
 			var i = 0
 			splitString foreach {e=>
-								 val a = breeze.text.analyze.PorterStemmer.apply(e)
-								 //There is still a blank space at the beginning of string (does not affect output)
-								 stemmedString(i) = a
-								 i+=1
+									val a = breeze.text.analyze.PorterStemmer.apply(e)
+									//There is still a blank space at the beginning of string (does not affect output)
+									stemmedString(i) = a
+									i+=1
 								}		
 			counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)	
 			//only working with keys for now, creating a list of keys for every text:
@@ -186,8 +186,9 @@ import scala.collection.immutable.List
 			// take the logarithm of the quotient of the number of documents by the documents where term t appears
 			//convert appearances to a float (to avoid errors)
 			var appearances : Double = 0.0
-			counts foreach {x => if (x.contains(term)){
-							appearances += 1
+			counts foreach {x => 
+			  					if (x.contains(term)){
+			  					appearances += 1
 							}
 			}
 			val a = math.log(datasetSize/appearances)  
