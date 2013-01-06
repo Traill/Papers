@@ -65,10 +65,9 @@ trait BagOfWordsLSI {
 	def idf(term: String, datasetSize : Double, counts: Array[Map[java.lang.String,Int]]): Double = {
 			// take the logarithm of the quotient of the number of documents by the documents where term t appears
 			//convert appearances to a float (to avoid errors)
-			var appearances : Int = 0
-			var appearancesFloat = appearances.toFloat
+			var appearances : Double = 0.0
 			counts foreach {x => if (x.contains(term)){
-									appearancesFloat += 1
+									appearances += 1
 
 						   }
 			}
@@ -86,69 +85,30 @@ trait BagOfWordsLSI {
 	//Creating the matrix:
 	def createTDMatrix(papers: List[Paper], approximation: Int): breeze.linalg.DenseMatrix[Int] = {
 		val datasetSize = papers.length
-		datasetSize.toFloat
+
 		//Initialisation of arrays
 		//Array storing the different sources and the different texts
-		val source = new Array[scala.io.BufferedSource](papers.length)
-		var text = new Array[java.lang.String](papers.length)
-		val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
-		//now we want to have a map between words and the number of occurences
-		//create an array for easier manipulation
-		val counts = new Array[Map[java.lang.String,Int]](papers.length)		
-		//Create an array of lists to store all different lists of keys:
-		val countsList = new Array[List[java.lang.String]](papers.length)
-		//List holding all the list of strings of all the texts
-		var textsList = List[java.lang.String]()
-		//reading from every entry of the list:
-		for (k <- 0 to papers.length-1){
-			    text(k) = papers(k).getAbstract.getText		    
-			    //leave out unecessary characters from the analysis
-			    text(k) = clean(text(k))
-			    
-			    //Splitting the string into words to add stemming to every single word
-			    val splitString = text(k).split("\\s")
-				var stemmedString = new Array[java.lang.String](splitString.length)
-				var i = 0
-				splitString foreach {e=>
-		  							val a = breeze.text.analyze.PorterStemmer.apply(e)
-		  							//There is still a blank space at the beginning of string (does not affect output)
-		  							stemmedString(i) = a
-		  							i+=1
-		  							}
-
-				// create a map of the keys of the text with their occurences
-				counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)
-
-				//only working with keys for now, creating a list of keys for every text:
-				countsList(k) = counts(k).keys.toList		
-
-				if(k == 0){
-				textsList = countsList(k)
-				}else{
-				textsList = textsList ::: countsList(k)									
-				}
-			}
 		
-			//building dictionary:
-			//find unique words in texts
-			val dictionary = buildDictionary(textsList, datasetSize)
+		//preprocess the papers:
+		val (textsList,counts) = preprocessTexts(papers)
+		
+		//building dictionary:
+		//find unique words in texts
+		val dictionary = buildDictionary(textsList, datasetSize)
 			
-			// we compute the Matrix of scores for the vectors of words for every document
-		    //construct it as a vector to convert it as a Matrix
-			val tfidfVector = new Array[Double](dictionary.length*datasetSize)
-			var j = 0 
-			println("Computing tfidf vector... with a dictionary of length " + dictionary.length + " and wait up to " + dictionary.length*datasetSize)
-				for (i <- 0 to dictionary.length*datasetSize-1){
-					//compute tfidf value for word i and document j
-					//check if we have reached the length of the dictionary we change document and compute values
-					if (i % dictionary.length == 0 && i != 0){
-						j += 1	
-					}
-
-			        tfidfVector(i) = tfidf(dictionary(i%dictionary.length),j,datasetSize,counts)			
-				}
-
-			println("Computing tfidf vector: Complete...")
+		// we compute the Matrix of scores for the vectors of words for every document
+		//construct it as a vector to convert it as a Matrix
+		val tfidfVector = new Array[Double](dictionary.length*datasetSize)
+		var j = 0 
+		for (i <- 0 to dictionary.length*datasetSize-1){
+			//compute tfidf value for word i and document j
+			//check if we have reached the length of the dictionary we change document and compute values
+			if (i % dictionary.length == 0 && i != 0){
+				j += 1	
+			}
+				
+			tfidfVector(i) = tfidf(dictionary(i%dictionary.length),j,datasetSize,counts)			
+		}
 
 			//transform tfidf vector into a matrix to compute SVD:
 			val termDocMatrix = new breeze.linalg.DenseMatrix[Double](dictionary.length,datasetSize,tfidfVector)
@@ -228,6 +188,49 @@ trait BagOfWordsLSI {
 		return dictionary
 	}
 
+	def preprocessTexts(papers: List[Paper]): (List[java.lang.String], Array[Map[java.lang.String,Int]]) ={
+		val source = new Array[scala.io.BufferedSource](papers.length)
+		var text = new Array[java.lang.String](papers.length)
+		val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
+		//now we want to have a map between words and the number of occurences
+		//create an array for easier manipulation
+		val counts = new Array[Map[java.lang.String,Int]](papers.length)		
+		//Create an array of lists to store all different lists of keys:
+		val countsList = new Array[List[java.lang.String]](papers.length)
+		//List holding all the list of strings of all the texts
+		var textsList = List[java.lang.String]()
+		//reading from every entry of the list:
+		for (k <- 0 to papers.length-1){
+			text(k) = papers(k).getAbstract.getText		    
+			//leave out unecessary characters from the analysis
+			text(k) = clean(text(k))
+			    
+			//Splitting the string into words to add stemming to every single word
+			val splitString = text(k).split("\\s")
+			var stemmedString = new Array[java.lang.String](splitString.length)
+			var i = 0
+			splitString	foreach	{e=>
+			  						val a = breeze.text.analyze.PorterStemmer.apply(e)
+		  							//There is still a blank space at the beginning of string (does not affect output)
+		  							stemmedString(i) = a
+		  							i+=1
+		  							}
+
+			// create a map of the keys of the text with their occurences
+			counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)
+
+			//only working with keys for now, creating a list of keys for every text:
+			countsList(k) = counts(k).keys.toList		
+
+			if(k == 0){
+			textsList = countsList(k)
+			}else{
+			textsList = textsList ::: countsList(k)									
+			}
+		}
+		return (textsList, counts)
+	}
+	
 	def computeCosineSimilarity(datasetSize: Int, termDocMatrix: breeze.linalg.DenseMatrix[Double]): breeze.linalg.DenseMatrix[Double]={
 	  val similarityMatrix = breeze.linalg.DenseMatrix.zeros[Double](datasetSize,datasetSize)
 	  for (i <- 0 to datasetSize-1){

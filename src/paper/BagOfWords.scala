@@ -46,100 +46,88 @@ import scala.collection.immutable.List
 	}
 	def getMatrixOfScores(papers: List[Paper]): Array[Array[Int]] ={
 		val datasetSize = papers.length
-		//convert dataset size to float to avoid errors
-		datasetSize.toFloat
-		//Initialisation of arrays
-		//Array storing the different sources and the different texts
+		//STEP 1: preprocess the papers:
+		val (textsList,counts) = preprocessTexts(papers)		
+		//STEP 2: Build dictionary:
+		val dictionary = buildDictionary(textsList, datasetSize)
+		
+		// we compute the array of scores for the vectors of words for every document
+		val tfidfArray = new Array[Array[Double]](dictionary.length,datasetSize)
+		
+		//STEP 3: Computing tfidf with tfidf function:
+		for (i <- 0 to dictionary.length -1){
+			for (j <- 0 to datasetSize -1){
+				//compute tfidf value for word i and document j
+				tfidfArray(i)(j) = tfidf(dictionary(i),j,datasetSize,counts)
+			}
+		}
+			
+		//convert matrix to string to export it
+		val mat = tfidfArray.deep.mkString("\n")
+
+		//once we have the scores we can compute the absolute distance between papers and classify them
+		//This is performed computing a scalar product on the score vectors for every document
+		//Computation might take some time
+			
+		//STEP 4: Computing cosine similarity:		
+		val cosineSimilarity = computeCosineSimilarity(datasetSize, tfidfArray)	
+		//check if rounding is done correctly
+		val maximalWeight = cosineSimilarity.flatten.max
+		//Normalize scores up to 100
+		val normalizedCosSimilarity = cosineSimilarity.map(col =>{	
+										col.map(weight =>  ((weight*100)/maximalWeight).toInt)
+										})
+		//return array of scores
+					
+		normalizedCosSimilarity
+		//(i,j) of scalarProduct represents the scalar product of document i and document j. Now we have
+		// to sort it in order in a list to return the closest documents to a given document
+		//we have weights (higher weight/score) means being closer document-to-document wise
+	}
+
+	def preprocessTexts(papers: List[Paper]): (List[java.lang.String], Array[Map[java.lang.String,Int]]) ={
 		val source = new Array[scala.io.BufferedSource](papers.length)
-		//we will be changing the content of text -> create it as variable
 		var text = new Array[java.lang.String](papers.length)
 		val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
 		//now we want to have a map between words and the number of occurences
 		//create an array for easier manipulation
-		val counts = new Array[Map[java.lang.String,Int]](papers.length)
-					
+		val counts = new Array[Map[java.lang.String,Int]](papers.length)		
 		//Create an array of lists to store all different lists of keys:
 		val countsList = new Array[List[java.lang.String]](papers.length)
 		//List holding all the list of strings of all the texts
 		var textsList = List[java.lang.String]()
-		
 		//reading from every entry of the list:
-		//preprocess every paper (for)
 		for (k <- 0 to papers.length-1){
-			text(k) = papers(k).getAbstract.getText
+			text(k) = papers(k).getAbstract.getText		    
 			//leave out unecessary characters from the analysis
 			text(k) = clean(text(k))
+			    
 			//Splitting the string into words to add stemming to every single word
 			val splitString = text(k).split("\\s")
 			var stemmedString = new Array[java.lang.String](splitString.length)
 			var i = 0
-			splitString foreach {e=>
-									val a = breeze.text.analyze.PorterStemmer.apply(e)
-									//There is still a blank space at the beginning of string (does not affect output)
-									stemmedString(i) = a
-									i+=1
-								}		
-			counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)	
+			splitString	foreach	{e=>
+			  						val a = breeze.text.analyze.PorterStemmer.apply(e)
+		  							//There is still a blank space at the beginning of string (does not affect output)
+		  							stemmedString(i) = a
+		  							i+=1
+		  							}
+
+			// create a map of the keys of the text with their occurences
+			counts(k) = stemmedString.groupBy(x=>x).mapValues(x=>x.length)
+
 			//only working with keys for now, creating a list of keys for every text:
-			countsList(k) = counts(k).keys.toList					
+			countsList(k) = counts(k).keys.toList		
+
 			if(k == 0){
-				textsList = countsList(k)
+			textsList = countsList(k)
 			}else{
-				textsList = textsList ::: countsList(k)			
-			}						
+			textsList = textsList ::: countsList(k)									
+			}
 		}
-			//Build dictionary:
-			val dictionary = buildDictionary(textsList, datasetSize)
-			val dictionaryArray = dictionary.toArray
-			val dictionaryString = dictionaryArray.deep.mkString("\n")
-
-			// we compute the array of scores for the vectors of words for every document
-			val tfidfArray = new Array[Array[Double]](dictionary.length,datasetSize)
-			println("Computing tfidf array... ")
-			
-			//STEP 3: Computing tfidf with tfidf function:
-			for (i <- 0 to dictionary.length -1){
-				for (j <- 0 to datasetSize -1){
-					//compute tfidf value for word i and document j
-					tfidfArray(i)(j) = tfidf(dictionary(i),j,datasetSize,counts)
-				}
-			}
-			
-			//convert matrix to string to export it
-			val mat = tfidfArray.deep.mkString("\n")
-			def exportMatrixToText(matrix: String) : Unit = {
-				val file = new java.io.File("matrix.csv")
-				val p = new java.io.PrintWriter(file)
-				p.println(matrix)
-				p.close
-			}
-			println("Computing tfidf array: Complete...")
-			//once we have the scores we can compute the absolute distance between papers and classify them
-			//This is performed computing a scalar product on the score vectors for every document
-			//Computation might take some time
-			
-			//STEP 4: Computing cosine similarity:
-			
-			println("Computing scalar product array")
-			val cosineSimilarity = computeCosineSimilarity(datasetSize, tfidfArray)
-			
-			//return array of scores
-			println("Computing scalar product array: Done...")		
-					
-			//check if rounding is done correctly
-			val maximalWeight = cosineSimilarity.flatten.max
-			//Normalize scores up to 100
-			val normalizedCosSimilarity = cosineSimilarity.map(col =>{	
-										col.map(weight =>  ((weight*100)/maximalWeight).toInt)
-										})
-			//return sorted scores with according paper
-					
-			normalizedCosSimilarity
-			//(i,j) of scalarProduct represents the scalar product of document i and document j. Now we have
-			// to sort it in order in a list to return the closest documents to a given document
-			//we have weights (higher weight/score) means being closer document-to-document wise
+		return (textsList, counts)
 	}
-
+	
 	//Function to build the dictionary out of different texts concatenated in a list
 	def buildDictionary(textsList: List[java.lang.String], datasetSize: Int) : List[java.lang.String] ={
 		val dictionary = textsList.distinct.sortWith(_<_)
@@ -204,6 +192,13 @@ import scala.collection.immutable.List
 			return tfidf
 	}
 
+	def exportMatrixToText(matrix: String) : Unit = {
+		val file = new java.io.File("matrix.csv")
+		val p = new java.io.PrintWriter(file)
+		p.println(matrix)
+		p.close
+	}
+	
 	//defining scala product for array vector operations
 	def dotProduct[T <% Double](as: Iterable[T], bs: Iterable[T]) = {
 		require(as.size == bs.size)
