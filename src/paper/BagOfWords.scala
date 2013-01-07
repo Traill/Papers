@@ -86,7 +86,6 @@ import scala.collection.immutable.List
 	}
 
 	def preprocessTexts(papers: List[Paper]): (List[java.lang.String], Array[Map[java.lang.String,Int]]) ={
-		val source = new Array[scala.io.BufferedSource](papers.length)
 		var text = new Array[java.lang.String](papers.length)
 		val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
 		//now we want to have a map between words and the number of occurences
@@ -98,7 +97,7 @@ import scala.collection.immutable.List
 		var textsList = List[java.lang.String]()
 		//reading from every entry of the list:
 		for (k <- 0 to papers.length-1){
-			text(k) = papers(k).getAbstract.getText		    
+			text(k) = papers(k).getBody.getText	 		    
 			//leave out unecessary characters from the analysis
 			text(k) = clean(text(k))
 			    

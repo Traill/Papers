@@ -142,7 +142,6 @@ trait BagOfWordsLSI {
 			var newKeptValues = new Array[Array[Double]](keptValues.length,keptValues.length)
 			var arrayCounter = 0 
 
-			println(keptValues.deep.mkString("\n"))
 			val keptVTr = keptValues.transpose
 			keptVTr foreach{e =>
 			if (arrayCounter <= approximation-1){
@@ -152,9 +151,6 @@ trait BagOfWordsLSI {
 			  Nil
 			}
 			  }
-			println("separation")
-			println(newKeptValues.deep.mkString("\n"))
-
 			val emptyArray2 = new Array[Array[Double]](0)
 			//Select k=approximation rows from Dt the document matrix where each column represents a document
 			var newVo = selectElementsOf2dimArray(vo,(0 to approximation-1).toList,emptyArray2)
@@ -174,7 +170,7 @@ trait BagOfWordsLSI {
 
 			//compute cosine similarity:		
 			val similarityMatrix = computeCosineSimilarity(datasetSize, newtermDocMatrix)
-			//normalize weights from 1 to 100
+			//normalize weights from -100 to 100
 			val maximalWeight = similarityMatrix.max
 			val normalizedCosSimilarity = similarityMatrix.map(weight =>{
 												((weight*100)/maximalWeight).toInt
@@ -189,7 +185,6 @@ trait BagOfWordsLSI {
 	}
 
 	def preprocessTexts(papers: List[Paper]): (List[java.lang.String], Array[Map[java.lang.String,Int]]) ={
-		val source = new Array[scala.io.BufferedSource](papers.length)
 		var text = new Array[java.lang.String](papers.length)
 		val occurences = new Array[Map[java.lang.String,Array[java.lang.String]]](papers.length)
 		//now we want to have a map between words and the number of occurences
@@ -201,7 +196,7 @@ trait BagOfWordsLSI {
 		var textsList = List[java.lang.String]()
 		//reading from every entry of the list:
 		for (k <- 0 to papers.length-1){
-			text(k) = papers(k).getAbstract.getText		    
+			text(k) = papers(k).getBody.getText	    
 			//leave out unecessary characters from the analysis
 			text(k) = clean(text(k))
 			    
@@ -249,8 +244,6 @@ trait BagOfWordsLSI {
 						val secondColumnNorm = secondColumn.norm(2)
 							
 						similarityMatrix(i,j) = similarityMatrix(i,j)/(firstColumnNorm*secondColumnNorm)
-						println(i + " and j is " + j )
-						println(similarityMatrix(i,j))
 					    }
 					}
 				}
@@ -437,41 +430,5 @@ trait BagOfWordsLSI {
 		object Divergence extends Reason
 		object Breakdown extends Reason
 	}
-
-	//Scala for java developers: http://blog.scala4java.com/2011/12/matrix-multiplication-in-scala-single.html
-
-	def multiplyArrays(m1: Array[Array[Double]], m2: Array[Array[Double]]) :  Array[Array[Double]] = {
-    val res =  Array.ofDim[Double](m1.length, m2(0).length)
-    val M1_COLS = m1(0).length
-    val M1_ROWS = m1.length
-    val M2_COLS = m2(0).length
-
-    @inline def singleThreadedMultiplicationFAST(start_row:Int,  end_row:Int) {
-      var col, i  = 0
-      var sum = 0.0
-      var row = start_row
-
-      // while statements are much faster than for statements
-      while(row < end_row){ col = 0
-        while(col < M2_COLS){ i = 0; sum = 0
-          while(i<M1_COLS){
-            sum += m1(row)(i) * m2(i)(col)
-            i+=1
-          }
-
-          res(row)(col) = sum
-          col += 1
-
-        }; row += 1
-      }
-    }
-
-    (0 until M1_ROWS).par.foreach( i =>
-      singleThreadedMultiplicationFAST(i, i+1)
-    )
-
-    res
-
-  }
 
 }
