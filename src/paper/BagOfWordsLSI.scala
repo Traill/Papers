@@ -3,11 +3,13 @@ package paper
 
 
 import breeze.linalg.DenseVector
+import breeze.linalg._
 import breeze.classify
 import org.netlib.lapack.LAPACK
 import org.netlib.util.intW
 import breeze.linalg.support.{CanCopy}
-
+import breeze.util.Index
+import breeze.text.tokenize.JavaWordTokenizer
 
 
 
@@ -17,8 +19,8 @@ trait BagOfWordsLSI {
  // error is here:
   def compareBoWLSI(paperPos: String, papers : List[Paper], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == List()) CacheLoader.load(paperPos, Cache.extended) else papers
-	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers,50)
-
+	  val matrixOfWeights: breeze.linalg.DenseMatrix[Int] = createTDMatrix(loadedPapers)
+	  
 	  loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
@@ -75,7 +77,7 @@ trait BagOfWordsLSI {
 			return a
 	}
 
-	def tfidf(term:String, document: Int, datasetSize : Double, counts: Array[Map[java.lang.String,Int]]) : Double = {
+	def tfidf(term: String, document: Int, datasetSize : Double, counts: Array[Map[java.lang.String,Int]]) : Double = {
 		//Create tfidf matrix
 		//tfidf = tf*idf
 		val tfidf = tf(term,document,counts)*idf(term,datasetSize,counts)
@@ -83,7 +85,7 @@ trait BagOfWordsLSI {
 	}
 
 	//Creating the matrix:
-	def createTDMatrix(papers: List[Paper], approximation: Int): breeze.linalg.DenseMatrix[Int] = {
+	def createTDMatrix(papers: List[Paper]): breeze.linalg.DenseMatrix[Int] = {
 		val datasetSize = papers.length
 
 		//Initialisation of arrays
@@ -91,7 +93,7 @@ trait BagOfWordsLSI {
 		
 		//preprocess the papers:
 		val (textsList,counts) = preprocessTexts(papers)
-		
+  
 		//building dictionary:
 		//find unique words in texts
 		val dictionary = buildDictionary(textsList, datasetSize)
@@ -117,12 +119,14 @@ trait BagOfWordsLSI {
 			//SVD method returns simple arrays - need to convert them:
 			//Dimensionality reduction:
 			val (u,s,v) = svd(termDocMatrix)
-
+			println(s.deep.mkString("\n"))
 			//converting s and v to 2 dimensional arrays:
 			var vo = reconstructArray(v,termDocMatrix.cols)
-			println(vo.length + " " + vo.transpose.length)
+			//println(vo.length + " " + vo.transpose.length)
 			var so = Array.ofDim[Double](termDocMatrix.rows,termDocMatrix.cols)
-			println(so.length + " " + so.transpose.length)
+			//println(so.length + " " + so.transpose.length)
+			println("The singular values are: ")
+			//println(so.deep.mkString("\n"))
 			var count = 0
 			var count2 = 0
 
@@ -138,8 +142,15 @@ trait BagOfWordsLSI {
 			//select values of the indices in the given array s - indices are the 0 to k-1 first values:
 			val emptyArray = new Array[Array[Double]](0)
 			//keeping k greatest singular values:
+			
+			//computation of the approximation factor... Look at importance of singular values:
+			//test with s>20 and s>500 - compare
+			val approximation = s.count(s=> s> 50)
+			println("Approximation : " + approximation)
+			
+			println("approximation: " + approximation)
 			val keptValues = selectElementsOf2dimArray(so,(0 to approximation-1).toList,emptyArray)
-			var newKeptValues = new Array[Array[Double]](keptValues.length,keptValues.length)
+			var newKeptValues = Array.ofDim[Double](keptValues.length,keptValues.length)
 			var arrayCounter = 0 
 
 			val keptVTr = keptValues.transpose
@@ -156,6 +167,14 @@ trait BagOfWordsLSI {
 			var newVo = selectElementsOf2dimArray(vo,(0 to approximation-1).toList,emptyArray2)
 
 			val recomposedMatrix = newVo.transpose.flatten
+			val documentConceptMatrix = new breeze.linalg.DenseMatrix[Double](approximation,termDocMatrix.cols,recomposedMatrix)
+			//We take our s vector of singular values and convert it to a DenseVector
+			val singularValuesVector = new DenseVector[Double](s.slice(0,approximation))
+			//Create a diagonal matrix out of these values
+			val singularValuesMatrix = diag(singularValuesVector)
+			
+			
+			
 
 			//Matrix reduction with an approximation app - if no matrix reduction, use old tfidf method:
 			def matchApproximation(app: Int): breeze.linalg.DenseMatrix[Double] = app match{
@@ -163,7 +182,13 @@ trait BagOfWordsLSI {
 			  case termDocMatrix.cols =>  termDocMatrix
 			  case 0 => termDocMatrix
 			  //else compute with recomposedMatrix	
-			  case y => new breeze.linalg.DenseMatrix[Double](app,termDocMatrix.cols,recomposedMatrix)	            
+			  //new implementation: Scale by singular values every concept:
+			  // 
+			  case y => singularValuesMatrix*documentConceptMatrix
+			  //case y => val weightedMatrix = recomposedMatrix.map(weightedValue =>{
+			    //()
+			 // })
+			    //new breeze.linalg.DenseMatrix[Double](app,termDocMatrix.cols,recomposedMatrix)	            
 			}
 
 			val newtermDocMatrix = matchApproximation(approximation)
@@ -195,11 +220,12 @@ trait BagOfWordsLSI {
 		//List holding all the list of strings of all the texts
 		var textsList = List[java.lang.String]()
 		//reading from every entry of the list:
+		//work on abstract:
 		for (k <- 0 to papers.length-1){
-			text(k) = papers(k).getBody.getText	    
+			text(k) = papers(k).getAbstract.getText   
 			//leave out unecessary characters from the analysis
 			text(k) = clean(text(k))
-			    
+			
 			//Splitting the string into words to add stemming to every single word
 			val splitString = text(k).split("\\s")
 			var stemmedString = new Array[java.lang.String](splitString.length)
@@ -302,9 +328,9 @@ trait BagOfWordsLSI {
 		if(listOfIndex.length < k){
 			val maxofArray = inputVector.max
 			if (maxofArray != 0){
-					var newlistOfIndex = listOfIndex:::List(inputVector.findIndexOf(x => x == maxofArray))				
+					var newlistOfIndex = listOfIndex:::List(inputVector.indexWhere(x => x == maxofArray))				
 					//set maximal value to 0 so it does not get taken into account again
-					inputVector(inputVector.findIndexOf(x => x == maxofArray)) = 0
+					inputVector(inputVector.indexWhere(x => x == maxofArray)) = 0
 					findKMax(inputVector,k, newlistOfIndex)
 
 				}else{
@@ -341,7 +367,7 @@ trait BagOfWordsLSI {
 		var len = 0
 		xs foreach { e =>
 						if (len < n || e > min) {
-							ss = (xs.findIndexOf(x=>x==e) :: ss).sorted
+							ss = (xs.indexWhere(x=>x==e) :: ss).sorted
 							min = ss.head
 							len += 1
 						}
@@ -432,3 +458,4 @@ trait BagOfWordsLSI {
 	}
 
 }
+	

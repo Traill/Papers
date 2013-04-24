@@ -1,5 +1,7 @@
 package paper
+
 import scala.collection.immutable.List
+import breeze.cluster.LDA
 
 
  trait BagOfWords {
@@ -9,6 +11,7 @@ import scala.collection.immutable.List
 	def compareBoW(paperPos: String, papers : List[Paper], limit : Int) : List[Paper] = {
 	  val loadedPapers = if(papers == List()) CacheLoader.load(paperPos, Cache.extended) else papers
 	  val matrixOfWeights: Array[Array[Int]] = getMatrixOfScores(loadedPapers)	  
+
 			loadedPapers.map(p => {
 				// Check that paper isn't already linked
 				if (p.meta.get("linked") == None) {
@@ -52,7 +55,7 @@ import scala.collection.immutable.List
 		val dictionary = buildDictionary(textsList, datasetSize)
 		
 		// we compute the array of scores for the vectors of words for every document
-		val tfidfArray = new Array[Array[Double]](dictionary.length,datasetSize)
+		val tfidfArray = Array.ofDim[Double](dictionary.length,datasetSize)
 		
 		//STEP 3: Computing tfidf with tfidf function:
 		for (i <- 0 to dictionary.length -1){
@@ -134,8 +137,8 @@ import scala.collection.immutable.List
 	}
 	
 	def computeCosineSimilarity( datasetSize: Int, tfidfArray: Array[Array[Double]]) : Array[Array[Double]]={
-		val scalarProduct = new Array[Array[Double]](datasetSize,datasetSize)
-		val cosineSimilarity = new Array[Array[Double]](datasetSize,datasetSize)
+		val scalarProduct = Array.ofDim[Double](datasetSize,datasetSize)
+		val cosineSimilarity = Array.ofDim[Double](datasetSize,datasetSize)
 		//transpose array to perform row Array operations instead of column based operations
 		val tfidfTranspose = tfidfArray.transpose
 		for (i <- 0 to datasetSize -1){
@@ -207,6 +210,8 @@ import scala.collection.immutable.List
 	//replace all characters of a string except for a-z or A-Z (replacing numbers) and finally _: 
 	def clean(in : String) = { if (in == null) "" else in.replaceAll("[^A-Za-z_]", " ").toLowerCase
 	}
+	
+	
 	
 
 }

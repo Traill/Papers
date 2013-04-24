@@ -17,7 +17,7 @@ trait Graphs {
 
   // MODIFICATION
  def makeNode(paper : Paper) : Node = {
-    println("Making node for " + paper.id)
+    //println("Making node for " + paper.id)
     Node(paper.id, paper.meta("xmlpapertitle"), paper.meta("xmlauthors"), paper.meta("pdf"), paper.meta("xmldate"), paper.meta("xmlroom"))
   }
   
